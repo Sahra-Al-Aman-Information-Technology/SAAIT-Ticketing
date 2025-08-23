@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+venv/
+ticketing/Lib/
+ticketing/Scripts/
+ticketing/Include/
+*.env
+
+# Logs
+*.log
+
+# Build / Backup
+build/
+backup/
+*.spec
+*.exe
+*.bat
+*.vbs
+*.msi
+
+# System
+.DS_Store
+Thumbs.db

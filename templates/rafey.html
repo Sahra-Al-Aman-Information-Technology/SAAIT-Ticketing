@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket System</title>
+  <style>
+ 
+ 
+ html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+ 
+ 
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;         /* ✅ Makes full vertical space available */
+}
+ 
+header {
+  position: relative;
+  background-color: #010b13;
+  color: white;
+  font-weight: bold;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1em;
+  padding: 0 20px;
+}
+ 
+.header-logo {
+  height: 55px;
+  width: auto;
+  margin-right: 10px;
+}
+ 
+.main-content {
+  flex: 1;                    /* ✅ Fills space between header and footer */
+  padding: 20px;
+  overflow-y: auto;
+}
+ 
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: #f1f1f1;
+  color: #333;
+  font-size: 0.9em;
+  text-align: center;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  z-index: 1000; /* optional: keeps footer above other elements */
+}
+ 
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #f4f4f4;
+      position: relative;
+    }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9em;
+      display: inline-block;
+      min-width: 60px;
+    }
+ 
+     /* 🎯 PRIORITY BADGES */
+.badge.low {
+  background-color: #28a745;  /* Green */
+  color: white;
+}
+ 
+.badge.medium {
+  background-color: #ffc107;  /* Amber */
+  color: black;
+}
+ 
+.badge.high {
+  background-color: #dc3545;  /* Red */
+  color: white;
+}
+ 
+/* 📊 STATUS BADGES */
+.badge.open {
+  background-color: #dc3545;  /* Cyan / Info */
+  color: white;
+}
+ 
+.badge.in-progress {
+  background-color: #fd7e14;  /* Orange */
+  color: white;
+}
+ 
+.badge.closed {
+  background-color: #17a2b8;  /* Gray / Secondary */
+  color: white;
+}
+.badge.on-hold-arm-team {
+  background-color: #6c757d; /* Gray */
+  color: white;
+}
+.badge.stale {
+  background-color: #6c757d !important;  /* unique grey */
+  color: white;
+}
+ 
+.badge.on-hold-saait-team {
+  background-color: #5a6268; /* Darker Gray */
+  color: white;
+}
+ 
+ .badge.on-demand-arm-team {
+  background-color: #5a6268; /* ARM team color */
+  color: white;
+}
+
+.badge.on-demand-saait-team {
+  background-color: #007bff; /* SAAIT team color */
+  color: white;
+}
+
+
+
+
+
+
+
+    button {
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      background-color: #020d19;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: small;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      width: 500px;
+      max-width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00000055;
+      max-height: 90vh;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+    .modal-content label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+      width: 100%;
+      padding: 7px;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+    }
+    .modal-content textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-size: 1rem;
+    }
+    .modal-footer {
+      text-align: right;
+      margin-top: 15px;
+    }
+    .modal-footer button {
+      margin-left: 10px;
+    }
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+    }
+    .image-modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 8px;
+      box-shadow: 0 0 20px #00000099;
+      background: white;
+    }
+ 
+    /* ARM TICKETS label above Attachment column */
+    .attachment-header-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .attachment-header-container .arm-tickets-label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: #020d19;
+      cursor: default;
+      user-select: none;
+      background-color: #081b29;
+      padding: 3px 10px;
+      border-radius: 6px;
+      color: white;
+    }
+ 
+    /* ARM logo above Edit column */
+    .edit-header-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0px;
+    }
+    .edit-header-container img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-bottom: -8px; /* 👈 Moved logo upward more */
+}
+ 
+ 
+    /* Bigger description column */
+    td.description-cell {
+      text-align: left;
+      max-width: 300px;
+      white-space: normal;
+      word-wrap: break-word;
+      font-size: 0.9rem;
+    }
+    th.description-header {
+      max-width: 300px;
+    }
+ 
+    .filter-container {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: x-small;
+}
+ 
+.filter-container label {
+  font-weight: bold;
+  font-size: x-small;
+}
+ 
+.filter-container select {
+  width: 130px;           /* Same width */
+  height: 22px;           /* Slightly smaller height */
+  padding: 1px 5px;       /* Slightly reduced padding */
+  font-size: x-small;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+ 
+ 
+.attachment-pin {
+  display: inline-flex;
+  align-items: center;
+  transform: rotate(-135deg);
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+ 
+.horizontal-paperclip {
+  transform: rotate(0deg); /* Force no rotation */
+  transition: stroke 0.2s ease, transform 0.2s ease;
+}
+ 
+.attachment-pin:hover .horizontal-paperclip {
+  stroke: #007bff;
+  transform: scale(1.2);
+}
+ 
+ 
+.logout-button {
+  background-color: #000000;
+  color: #ffffff;
+  border: 1.2px solid #ffffff;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 550;
+  cursor: pointer;
+  margin-top: 7px; /* 👈 This moves it slightly downward */
+}
+ 
+ 
+.logout-button:hover {
+  background-color: #a80606;
+}
+ 
+ 
+ 
+/* Smaller but readable Date Logged and Closed Date columns */
+th.date-logged-header,
+td.date-logged-cell {
+  min-width: 80px;
+  max-width: 80px;
+  white-space: nowrap;
+}
+ 
+th.closed-date-header,
+td.closed-date-cell {
+  min-width: 80px;
+  max-width: 80px;
+  white-space: nowrap;
+}
+ 
+th.comments-header,
+td.comments-cell {
+  min-width: 200px;
+  max-width: 200px;
+  white-space: normal;         /* ✅ allow wrapping */
+  word-wrap: break-word;       /* ✅ break long words */
+  font-size: 0.8rem;           /* ✅ small text */
+  text-align: center;            /* better readability */
+}
+ 
+ 
+ .desc-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+ 
+.desc-wrapper.expanded .desc-text {
+  -webkit-line-clamp: unset;
+}
+ 
+.toggle-link {
+  color: #007bff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 4px;
+}
+ 
+ 
+ 
+.comment-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+ 
+.comment-wrapper.expanded .comment-text {
+  -webkit-line-clamp: unset;  
+}
+</style>
+ 
+</head>
+<body>
+<header id="mainHeader">
+ 
+  <div style="display: flex; align-items: center; width: 100%;">
+    <img src="/static/FINAL LOGO SAAIT.png" alt="Logo" class="header-logo" />
+    <div class="header-title" style="flex-grow: 1; text-align: center; font-size: 23px; font-style: oblique;">
+      SAAIT TICKETING SYSTEM
+    </div>
+    <button id="logoutBtn" class="logout-button">Logout</button>
+  </div>
+</header>
+ 
+ 
+<div class="main-content">
+  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+  <button id="addTicketButton">Add Ticket</button>
+  <button id="exportBtn">Export</button>
+ 
+</div>
+ 
+<div style="
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -50px;
+  margin-bottom: 10px;
+">
+  <div id="ticketInfo" style="display: flex; align-items: center; gap: 8px;">
+    <label id="ticketSystemLabel" style="
+      display: inline-block;
+      padding: 6px 10px;
+      background-color: #020d19;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: small;
+      font-family: Arial, sans-serif;
+      line-height: normal;
+      vertical-align: middle;
+      margin: 0;
+    ">
+      ARM TICKETS
+    </label>
+ 
+    <img id="ticketLogo" src="{{ url_for('static', filename='arm LOGO.jpeg') }}" alt="ARM Logo"
+         style="height: 27px; border-radius: 4px;" />
+  </div>
+</div>
+ 
+ 
+ 
+ 
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+<div class="filter-container" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; font-size: small;">
+ 
+ 
+  <!-- ✅ Wrap label + slicer in a span with correct ID -->
+<span id="multiStreamLabel" style="display: none; align-items: center; gap: 5px;">
+  <label for="sourceSlicer" style="font-size: small;">Multi Streams :</label>
+  <select id="sourceSlicer" style="font-size: small;">
+    <option value="">All Tickets</option>
+    <option value="ARM">ARM Tickets</option>
+    <option value="TLC">TLC Tickets</option>
+  </select>
+</span>
+ 
+ 
+ 
+ 
+ 
+<label for="statusFilter" style="font-size: small;">Status :</label>
+<select id="statusFilter" style="font-size: small;">
+<option value="">All</option>
+<option value="Open">Open</option>
+<option value="In Progress">In Progress</option>
+<option value="On Hold (ARM Team)">On Hold (ARM Team)</option>
+<option value="On Hold (SAAIT TEAM)">On Hold (SAAIT TEAM)</option>
+<option value="Closed">Closed</option>
+<option value="On Demand(ARM Team)">On Demand(ARM Team)</option>
+<option value="On Demand (SAAIT TEAM)">On Demand (SAAIT TEAM)</option>
+</select>
+
+
+<label for="streamFilter" style="font-size: small;">Stream :</label>
+<select id="streamFilter" style="font-size: small;">
+  <option value="">All</option>
+
+  <!-- CXO Group -->
+  <optgroup label="CXO">
+    <option value="CXO - ARM Invest">CXO - ARM Invest</option>
+    <option value="CXO - Finance">CXO - Finance</option>
+    <option value="CXO - HCM">CXO - HCM</option>
+    <option value="CXO - Leasing ">CXO - Leasing </option>
+    <option value="CXO - SCM">CXO - SCM</option>
+  </optgroup>
+
+  <!-- Other Streams -->
+  <option value="Finance">Finance</option>
+  <option value="HCM">HCM</option>
+  <option value="Leasing">Leasing</option>
+  <option value="SCM">SCM</option>
+  <option value="Pricing & Strategy">Pricing & Strategy</option>
+  <option value="Leasing - Zoho">Leasing - Zoho</option>
+  <option value="Other">Other</option>
+</select>
+
+
+
+
+
+
+
+    <label for="priorityFilter" style="font-size: small;">Priority :</label>
+<select id="priorityFilter" style="font-size: small;">
+<option value="">All</option>
+<option value="Low">Low</option>
+<option value="Medium">Medium</option>
+<option value="High">High</option>
+</select>
+ 
+    <label for="monthFilter" style="font-size: small;">Month:</label>
+<select id="monthFilter" style="font-size: small;">
+<option value="">All</option>
+<option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+</select>
+ 
+    <button id="clearFiltersBtn" style="
+      padding: 6px 12px;
+      font-size: small;
+      background-color: #020d19;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      height: 25px;
+      margin-left: 10px;
+      margin-top: 8px;
+    ">
+      Clear
+</button>
+</div>
+</div>
+ 
+ 
+<!-- 🎯 Slicer Section (Only visible for SAAIT) -->
+<div id="filterBar" style="
+  display: flex;
+  flex-wrap: wrap;
+  align-items: left;
+  gap: 14px;
+  padding: 10px 0;
+">
+ 
+ 
+ 
+  <table style="margin-top: -10px; width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th>Dashboard</th>
+        <th>Ticket No</th>
+        <th>Stream</th>
+        <th>Raised By</th>
+        <th>Assigned To</th>
+        <th>Subject</th>
+        <th class="date-logged-header">Date Logged</th>
+<th class="closed-date-header">Closed Date</th>
+        <th>Priority</th>
+        <th>Status</th>
+       
+        <th class="description-header">Description</th>
+<th class="comments-header">Comments</th> <!-- ✅ Added this -->
+<th>Attachment</th>
+ 
+        <th>
+          <div class="edit-header-container">
+           
+            Edit
+          </div>
+        </th>
+       
+      </tr>
+    </thead>
+    <tbody id="ticketTableBody"></tbody>
+  </table>
+</div>
+ 
+<footer>
+  <div>Powered by SAAIT</div>
+</footer>
+ 
+<div id="ticketModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Add Ticket</h3>
+    <form id="ticketForm">
+      <label>Stream</label>
+      <select id="modalStream" required></select>
+      <input id="customStream" name="customStream" type="text" style="display: none;" placeholder="Enter custom stream" />
+ 
+      <label>Dashboard</label>
+      <select id="modalDashboard" required></select>
+      <input id="customDashboard" name="customDashboard" type="text" style="display: none;" placeholder="Enter custom dashboard" />
+ 
+      <label>Ticket No.</label>
+      <input type="text" id="modalTicketNo" required readonly />
+ 
+      <label for="modalRaisedBy">Raised By</label>
+      <select id="modalRaisedBy" required>
+        <option value="">Select User</option>
+        <option>Sai Madhav</option>
+        <option>Joyson</option>
+        <option>Afroz</option>
+        <option>Bryan</option>
+        <option>Shahid</option>
+        <option>Sanobar</option>
+        <option>Shifa</option>
+        <option>Omair</option>
+        <option>Rafey</option>
+        <option>Ajay</option>
+        <option>Tanveer</option>
+        <option>Sarfraz</option>
+        <option>Jayesh</option>
+        <option>Mario</option>
+        <option>Naved</option>
+        <option value="Other">Other</option>
+      </select>
+      <input id="customRaisedBy" name="customRaisedBy" type="text" style="display: none;" placeholder="Enter raised by name" />
+     
+     <label for="modalAssignedTo">Assigned To</label>
+<select id="modalAssignedTo" name="assigned_to" required>
+  <option value="">Select Assignee</option>
+  <option>DREC TEAM</option>
+  <option>ABRAR</option>
+  <option>Tanveer</option>
+  <option>Naved</option>
+  <option>Shahid</option>
+  <option>Sanobar</option>
+  <option>Shifa</option>
+  <option>Omair</option>
+  <option>Rafey</option>
+  <option>Sarfraz</option>
+  <option>Sai Madhav</option>
+  <option>Shyam (ARM Team)</option>
+  <option>ARM Team</option>
+  <option>ARM (Shyam) and SAAIT (Tanveer)</option>
+  <option value="Other">Other</option>
+</select>
+ 
+<input id="customAssignedTo" name="custom_assigned_to" type="text" style="display:none;" placeholder="Enter assignee name" />
+ 
+      <label>Subject</label>
+        <select id="modalSubject" required>
+        <option value="">Select Subject</option>
+        <option value="Dashboard completely down">Dashboard completely down</option>
+        <option value="data breach">data breach</option>
+        <option value="Impact on CXO">Impact on CXO</option>
+        <option value="Visual issues">Visual issues</option>
+        <option value="incorrect data">incorrect data</option>
+        <option value="Enhancement requests">Enhancement requests</option>
+        <option value="UI tweaks">UI tweaks</option>
+        <option value="training queries">training queries</option>
+        <option value="Technical support">Technical support</option>
+        <option value="New dashboard Request">New dashboard Request</option>
+        <option value="Other">Other</option>
+      </select>
+      <input id="customSubject" name="customSubject" type="text" style="display: none;" placeholder="Enter custom subject" />
+ 
+      <label>Date Logged</label>
+<input type="date" id="modalDateLogged" name="date_logged" />
+ 
+ 
+      <label>Closed Date</label>
+      <input type="date" id="modalClosedDate" disabled />
+ 
+      <label>Priority</label>
+      <select id="modalPriority" required>
+        <option value="">Select Priority</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
+ 
+      <label>Status</label>
+<select id="modalStatus" required>
+  <option value="">Select Status</option>
+  <option value="Open">Open</option>
+  <option value="In Progress">In Progress</option>
+  <option value="On Hold (ARM Team)">On Hold (ARM Team)</option> <!-- ✅ NEW OPTION -->
+  <option value="On Hold (SAAIT TEAM)">On Hold (SAAIT TEAM)</option>
+  <option value="Closed">Closed</option>
+  <option value="On Demand(ARM Team)">On Demand(ARM Team)</option>
+  <option value="On Demand (SAAIT TEAM)">On Demand (SAAIT TEAM)</option>
+</select>
+ 
+ 
+      <label>Description</label>
+<textarea id="modalDescription" rows="5" required></textarea>
+ 
+<label>Comments</label>
+<textarea id="modalComments" rows="3" placeholder="Optional comment..."></textarea>
+ 
+<label>Attachment</label>
+<input type="file" id="modalAttachment" accept="image/*" />
+ 
+ 
+      <div class="modal-footer">
+        <button type="button" id="modalCancelBtn">Cancel</button>
+        <button type="submit">Save</button>
+        <button id="deleteTicketButton" style="display: none; background-color: red; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 10px;">
+          Delete
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+ 
+<!-- Image preview modal -->
+<div id="imageModal" class="image-modal">
+  <img id="imageModalContent" src="" alt="Attachment Preview" />
+</div>
+ 
+<script>
+ 
+  function formatDate(dateStr) {
+    if (!dateStr || dateStr === 'null') return '';  // handle null or string "null"
+    const d = new Date(dateStr);
+    if (isNaN(d)) return ''; // handle invalid date
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+ 
+ 
+ 
+ let userRole = "";
+let tickets = [];  // 👈 must exist globally and used by renderTickets()
+ 
+// ✅ Use actual role from sessionStorage instead of hardcoding "ARM"
+const TICKET_PREFIX = sessionStorage.getItem("role") || "";
+ 
+// Track if editing or adding
+let editingIndex = -1;
+ 
+  const dashboardsByStream = {
+      "Finance": [
+        "All", "Master Matrics", "MIS P&L Analytics", "P&L Analytics MOM", "Revenue Analysis",
+        "Revenue Analysis-BreakDown", "Revenue Details Table", "Revenue Waterfall Journey",
+        "Direct Cost Waterfall Journey", "Indirect Cost Waterfall Journey", "Expense - Cost Category",
+        "Expense - Break Down", "Expense - Utility Monthly", "Expense - Department",
+        "Expense - Utility Building", "Expense Analytics - Details", "AR Aging Analysis",
+        "Collection View", "Cheque Analysis"
+      ],
+      "Leasing": [
+        "All", "Leasing Analytics", "Leasing Details", "Customer 360", "Asset 360", "Discount Analysis",
+        "Lead Analysis", "Customer Complaint Status and Listing"
+      ],
+      "SCM": [
+        "All", "PO Analysis", "Saving Analysis", "Spend Analysis", "Process SLA View",
+        "Inventory Holding", "Capex/Non-Capex"
+      ],
+      "HCM": [
+        "All", "Master Matrics", "Performance", "Employee 360"
+      ],
+      "Pricing & Strategy": [
+        "All", "Portfolio Analysis", "Vacancy Analysis", "Rental Analysis",
+        "Recommended Price Listing Analysis", "Payback & Transaction Analysis",
+        "Rent Slab Analysis", "Strategic Analysis"
+      ],
+      "CXO": [
+        "All", "Finance", "ARM Holding", "Leasing", "Facilities", "HCM", "Procurement"
+      ],
+      "Leasing - Zoho": [
+        "All", "Leasing Revenue", "Leasing Status", "Leasing Unit Status"
+      ],
+      "Other": [
+        "Other"
+      ]
+    };
+ 
+ 
+  const addTicketButton = document.getElementById('addTicketButton');
+  const ticketModal = document.getElementById('ticketModal');
+  const ticketForm = document.getElementById('ticketForm');
+  const ticketTableBody = document.getElementById('ticketTableBody');
+ 
+  const modalStream = document.getElementById('modalStream');
+  const modalDashboard = document.getElementById('modalDashboard');
+  const modalTicketNo = document.getElementById('modalTicketNo');
+  const modalRaisedBy = document.getElementById('modalRaisedBy');
+  const modalSubject = document.getElementById('modalSubject');
+  const customSubject = document.getElementById('customSubject');
+  const modalDateLogged = document.getElementById('modalDateLogged');
+  const modalClosedDate = document.getElementById('modalClosedDate');
+  const modalPriority = document.getElementById('modalPriority');
+  const modalStatus = document.getElementById('modalStatus');
+  const modalAssignedTo = document.getElementById('modalAssignedTo');
+  const modalDescription = document.getElementById('modalDescription');
+  const modalAttachment = document.getElementById('modalAttachment');
+  const customRaisedBy = document.getElementById('customRaisedBy');   // ✅ FIXED: declared early
+  const customAssignedTo = document.getElementById('customAssignedTo'); // ✅ FIXED
+  const customStream = document.getElementById("customStream");       // ✅ FIXED
+  const customDashboard = document.getElementById("customDashboard"); // fixed
+  const statusFilter = document.getElementById('statusFilter');
+  const streamFilter = document.getElementById('streamFilter');
+  const priorityFilter = document.getElementById('priorityFilter');
+  const monthFilter = document.getElementById('monthFilter');
+ 
+  // Attach filters onchange
+  statusFilter.onchange = renderTickets;
+  streamFilter.onchange = renderTickets;
+  priorityFilter.onchange = renderTickets;
+  monthFilter.onchange = renderTickets;
+// ✅ Clear Filters Button Logic
+document.getElementById('clearFiltersBtn').onclick = () => {
+  statusFilter.value = '';
+  streamFilter.value = '';
+  priorityFilter.value = '';
+  monthFilter.value = '';
+ 
+  // ✅ Reset multi-stream slicer if it exists
+  const slicer = document.getElementById('sourceSlicer');
+  if (slicer) {
+    slicer.value = ''; // reset to "All Tickets"
+    loadTicketsFromBackend(''); // reload all tickets from backend
+  } else {
+    renderTickets(); // fallback for non-SAAIT roles
+  }
+};
+ 
+ addTicketButton.onclick = () => {
+  editingIndex = -1;
+  ticketForm.reset();
+  document.getElementById("deleteTicketButton").style.display = "none";
+  customSubject.style.display = 'none';
+ 
+  fetch("/get_next_ticket_no")
+  .then(res => res.json())
+  .then(data => {
+    if (data.next_ticket_no) {
+      modalTicketNo.value = data.next_ticket_no;
+    } else {
+      modalTicketNo.value = TICKET_PREFIX + " (pending)";
+    }
+  })
+  .catch(err => {
+    console.error("❌ Failed to fetch next ticket number:", err);
+    modalTicketNo.value = TICKET_PREFIX + " (error)";
+  });
+ 
+  modalAssignedTo.value = '';
+  modalClosedDate.value = '';
+  modalClosedDate.disabled = true;
+  modalDateLogged.valueAsDate = new Date();
+  modalStatus.value = 'Open';
+  modalPriority.value = '';
+ 
+  // Reset selects before loading
+  modalStream.innerHTML = '<option value="">Loading streams...</option>';
+  modalDashboard.innerHTML = '<option value="">Select Dashboard</option>';
+ 
+  // ✅ Call populateStreams() and wait for it before showing the modal
+  populateStreams()
+    .then(() => {
+      // Clear selection after loading
+      modalStream.value = '';
+      modalDashboard.value = '';
+      // Hide custom fields initially
+      customStream.style.display = 'none';
+      customStream.required = false;
+      customDashboard.style.display = 'none';
+      customDashboard.required = false;
+ 
+      ticketModal.style.display = 'flex';
+    })
+    .catch(err => {
+      console.error("Failed to load streams/dashboards:", err);
+      // fallback: still show modal (but dropdowns may be empty)
+      ticketModal.style.display = 'flex';
+    });
+};
+ 
+ 
+modalRaisedBy.onchange = () => {
+  if (modalRaisedBy.value === 'Other') {
+    customRaisedBy.style.display = 'block';
+    customRaisedBy.required = true;
+  } else {
+    customRaisedBy.style.display = 'none';
+    customRaisedBy.required = false;
+    customRaisedBy.value = '';
+  }
+};
+ 
+modalAssignedTo.onchange = () => {
+  if (modalAssignedTo.value === 'Other') {
+    customAssignedTo.style.display = 'block';
+    customAssignedTo.required = true;
+  } else {
+    customAssignedTo.style.display = 'none';
+    customAssignedTo.required = false;
+    customAssignedTo.value = '';
+  }
+};
+ 
+modalSubject.onchange = () => {
+  if (modalSubject.value === 'Other') {
+    customSubject.style.display = 'block';
+    customSubject.required = true;
+  } else {
+    customSubject.style.display = 'none';
+    customSubject.required = false;
+    customSubject.value = '';
+  }
+};
+ 
+modalStream.onchange = () => {
+  const customStream = document.getElementById("customStream");
+  const customDashboard = document.getElementById("customDashboard");
+  const selectedStream = modalStream.value;
+ 
+  // Show/hide custom stream input
+  if (selectedStream === 'Other') {
+    customStream.style.display = 'block';
+    customStream.required = true;
+ 
+    // Populate Dashboard with only "Other" option
+    modalDashboard.innerHTML = '<option value="Other">Other</option>';
+    modalDashboard.value = 'Other';
+    customDashboard.style.display = 'block';
+    customDashboard.required = true;
+  } else {
+    customStream.style.display = 'none';
+    customStream.required = false;
+ 
+    modalDashboard.innerHTML = '<option value="">Select Dashboard</option>';
+ 
+    if (selectedStream && dashboardsByStream[selectedStream]) {
+      dashboardsByStream[selectedStream].forEach(d => {
+        const option = document.createElement('option');
+        option.value = d;
+        option.textContent = d;
+        modalDashboard.appendChild(option);
+      });
+    }
+ 
+    // Always add "Other" option
+    const otherOption = document.createElement('option');
+    otherOption.value = 'Other';
+    otherOption.textContent = 'Other';
+    modalDashboard.appendChild(otherOption);
+ 
+    // Hide custom dashboard input by default
+    customDashboard.style.display = 'none';
+    customDashboard.required = false;
+  }
+};
+ 
+modalDashboard.onchange = () => {
+  if (modalDashboard.value === 'Other') {
+    customDashboard.style.display = 'block';
+    customDashboard.required = true;
+  } else {
+    customDashboard.style.display = 'none';
+    customDashboard.required = false;
+  }
+};
+ 
+let role = '';  // global variable
+ 
+ 
+window.addEventListener("load", () => {
+  fetch("/get_user_info")
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.role) {
+        role = data.role.trim().toUpperCase();  // Normalize
+        const username = data.username;
+ 
+        console.log("✅ Logged-in user:", username);
+        console.log("🎯 Role (project scope):", role);
+ 
+        // Store in sessionStorage
+        sessionStorage.setItem("role", role);
+        sessionStorage.setItem("name", username);
+ 
+        // OPTIONAL: Adjust branding or permissions
+        updateUIBasedOnRole(role);
+ 
+        // Now load tickets
+        loadTicketsFromBackend();
+      } else {
+        console.warn("❗ No role found in /get_user_info");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Failed to fetch user info:", err);
+    });
+});
+ 
+ function updateUIBasedOnRole(role) {
+  const title = document.querySelector(".header-title");
+  const logo = document.querySelector(".header-logo");
+  const label = document.getElementById("ticketSystemLabel");
+  const ticketLogo = document.getElementById("ticketLogo");
+  const header = document.getElementById("mainHeader");
+ 
+  const slicer = document.getElementById("sourceSlicer");           // dropdown
+  const multiStreamLabel = document.getElementById("multiStreamLabel"); // label wrapper
+ 
+  if (!title || !logo) return;
+ 
+  if (role === "ARM") {
+    title.textContent = "ARM Ticketing System";
+    logo.src = "/static/arm LOGO.jpeg";
+    if (label) label.textContent = "ARM TICKETS";
+    if (ticketLogo) ticketLogo.style.display = "inline-block";
+    if (header) header.style.backgroundColor = "#010b13";
+ 
+    if (slicer) slicer.style.display = "none";
+    if (multiStreamLabel) multiStreamLabel.style.display = "none";
+  }
+ 
+  else if (role === "TLC") {
+    title.textContent = "TLC Ticketing System";
+    logo.src = "/static/tlc_logo.png";
+    if (label) label.textContent = "TLC TICKETS";
+    if (ticketLogo) {
+      ticketLogo.src = "/static/TLC_LOGO.png";
+      ticketLogo.style.display = "inline-block";
+    }
+    if (header) header.style.backgroundColor = "#3366CC";
+ 
+    if (slicer) slicer.style.display = "none";
+    if (multiStreamLabel) multiStreamLabel.style.display = "none";
+  }
+ 
+  else if (role === "SAAIT") {
+    title.textContent = "SAAIT Ticketing System";
+    logo.src = "/static/FINAL LOGO SAAIT.png";
+    if (label) label.textContent = "SAAIT TICKETS";
+    if (ticketLogo) ticketLogo.style.display = "inline-block";
+    if (header) header.style.backgroundColor = "#010b13";
+ 
+    if (slicer) slicer.style.display = "inline-block";
+    if (multiStreamLabel) multiStreamLabel.style.display = "flex"; // keeps it aligned inline
+  }
+ 
+  if (role === "VIEWER") {
+    document.querySelector("#addTicketButton")?.setAttribute("disabled", true);
+  }
+}
+ 
+ 
+ticketForm.onsubmit = e => {
+  e.preventDefault();
+  if (role === "viewer") {
+    alert("You are not allowed to submit tickets.");
+    return;
+  }
+  let streamVal = modalStream.value === 'Other' ? customStream.value.trim() : modalStream.value;
+  if (!streamVal) {
+    alert('Please select or enter a stream.');
+    return;
+  }
+  let subjectVal = modalSubject.value === 'Other' ? customSubject.value.trim() : modalSubject.value;
+  if (!subjectVal) {
+    alert('Please enter a subject.');
+    return;
+  }
+  const formData = new FormData();
+  let dashboardVal = modalDashboard.value === 'Other' ? customDashboard.value.trim() : modalDashboard.value;
+if (!dashboardVal) {
+  alert('Please enter a dashboard.');
+  return;
+}
+  formData.append('dashboard', dashboardVal);
+  formData.append('stream', streamVal);
+  formData.append('subject', subjectVal);
+  formData.append('date_logged', modalDateLogged.value);   // ✅ lowercase "l"
+ 
+if (modalStatus.value === 'Closed') {
+  formData.append('closed_date', modalClosedDate.value || new Date().toISOString().split('T')[0]);
+} else {
+  formData.append('closed_date', '');
+}
+ 
+  formData.append('priority', modalPriority.value);
+  formData.append('status', modalStatus.value);
+  formData.append('description', modalDescription.value.trim());
+  formData.append('comment', modalComments.value.trim());
+  const raisedByVal = modalRaisedBy.value === 'Other' ? customRaisedBy.value.trim() : modalRaisedBy.value;
+  if (!raisedByVal) {
+    alert('Please enter who raised the ticket.');
+    return;
+  }
+  formData.append('raised_by', raisedByVal);
+ 
+  const assignedToVal = modalAssignedTo.value === 'Other' ? customAssignedTo.value.trim() : modalAssignedTo.value;
+  if (!assignedToVal) {
+    alert('Please enter the assignee.');
+    return;
+  }
+  formData.append('assigned_to', assignedToVal);
+ 
+ 
+  if (modalAttachment.files.length > 0) {
+    formData.append('attachment', modalAttachment.files[0]);
+  }
+ 
+ 
+  const isEditing = editingIndex !== -1;
+  const endpoint = isEditing ? '/update_ticket' : '/add_ticket';
+ 
+ 
+  if (isEditing) {
+    formData.append('id', tickets[editingIndex].id);
+    formData.append('ticket_no', tickets[editingIndex].ticketNo);
+  }
+ 
+  console.log('Submitting with values:', {
+    stream: streamVal,
+    dashboard: dashboardVal,
+    subject: subjectVal,
+    raised_by: raisedByVal,
+    assigned_to: assignedToVal
+  });
+ 
+fetch(endpoint, {
+  method: 'POST',
+  headers: {
+    "Role": sessionStorage.getItem("role")
+    // DO NOT set 'Content-Type' — browser will handle it with FormData
+  },
+  body: formData
+})
+.then(res => res.json())
+.then(data => {
+  if (data.message) {
+    alert(data.message + (data.ticket_no ? ' Ticket No: ' + data.ticket_no : ''));
+    ticketModal.style.display = 'none';
+    loadTicketsFromBackend();
+  } else {
+    alert('Error: ' + data.error);
+  }
+})
+.catch(err => {
+  console.error('❌ Error submitting ticket:', err);
+  alert('Failed to submit ticket.');
+});
+ 
+ 
+ 
+  if (role === "viewer") {
+    document.querySelectorAll("#ticketModal input, #ticketModal select, #ticketModal textarea")
+      .forEach(el => el.disabled = true);
+  }
+}
+function populateStreams(selectedStream = '', selectedDashboard = '') {
+  return fetch('/get_dropdown_data')
+    .then(res => res.json())
+    .then(data => {
+      modalStream.innerHTML = '<option value="">Select Stream</option>';
+ 
+      // Add streams from DB
+      data.streams.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name;
+        if (s.name === selectedStream) opt.selected = true;
+        modalStream.appendChild(opt);
+      });
+ 
+      // Always add "Other" option for stream
+      const otherOpt = document.createElement('option');
+      otherOpt.value = 'Other';
+      otherOpt.textContent = 'Other';
+      if (selectedStream === 'Other') otherOpt.selected = true;
+      modalStream.appendChild(otherOpt);
+ 
+      // On stream change
+      modalStream.onchange = () => {
+        modalDashboard.innerHTML = '<option value="">Select Dashboard</option>';
+ 
+        // Hide custom inputs initially
+        customStream.style.display = 'none';
+        customStream.required = false;
+        customDashboard.style.display = 'none';
+        customDashboard.required = false;
+ 
+        if (modalStream.value === 'Other') {
+          // ✅ Show custom stream
+          customStream.style.display = 'block';
+          customStream.required = true;
+ 
+          // Force dashboard to "Other"
+          modalDashboard.innerHTML = '<option value="Other">Other</option>';
+          modalDashboard.value = 'Other';
+ 
+          // ✅ Show custom dashboard
+          customDashboard.style.display = 'block';
+          customDashboard.required = true;
+        } else {
+          // ✅ Filter dashboards by stream NAME (not id)
+          data.dashboards
+            .filter(d => d.stream === modalStream.value)
+            .forEach(d => {
+              const opt = document.createElement('option');
+              opt.value = d.name;
+              opt.textContent = d.name;
+              if (d.name === selectedDashboard) opt.selected = true;
+              modalDashboard.appendChild(opt);
+            });
+ 
+          // Always add "Other" dashboard option
+          const otherDash = document.createElement('option');
+          otherDash.value = 'Other';
+          otherDash.textContent = 'Other';
+          if (selectedDashboard === 'Other') otherDash.selected = true;
+          modalDashboard.appendChild(otherDash);
+ 
+          // If "Other" dashboard chosen, show custom input
+          modalDashboard.onchange = () => {
+            if (modalDashboard.value === 'Other') {
+              customDashboard.style.display = 'block';
+              customDashboard.required = true;
+            } else {
+              customDashboard.style.display = 'none';
+              customDashboard.required = false;
+            }
+          };
+ 
+          // Trigger check if editing existing ticket
+          if (selectedDashboard === 'Other') {
+            modalDashboard.dispatchEvent(new Event('change'));
+          }
+        }
+      };
+ 
+      // Trigger stream change if preselected (edit mode)
+      if (selectedStream) {
+        modalStream.dispatchEvent(new Event('change'));
+      }
+    })
+    .catch(err => {
+      console.error('Error loading streams/dashboards:', err);
+      throw err;
+    });
+}
+ 
+ 
+ 
+function formatForInputDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toISOString().split('T')[0];
+}
+// OPEN EDIT MODAL
+function openEditModal(idx) {
+  editingIndex = idx;
+  const ticket = tickets[idx];
+ 
+  ticketForm.reset();
+ 
+  // Hide all custom fields initially
+  customSubject.style.display = 'none';
+  customStream.style.display = 'none';
+  customDashboard.style.display = 'none';
+  customRaisedBy.style.display = 'none';
+  customAssignedTo.style.display = 'none';
+ 
+  // ✅ First load streams & dashboards from backend
+  populateStreams(ticket.stream, ticket.dashboard)
+    .then(() => {
+      // STREAM
+      if (modalStream.querySelector(`option[value="${ticket.stream}"]`)) {
+        modalStream.value = ticket.stream;
+      } else {
+        modalStream.value = 'Other';
+        customStream.style.display = 'block';
+        customStream.required = true;
+        customStream.value = ticket.stream;
+      }
+      modalStream.dispatchEvent(new Event('change')); // refresh dashboards
+ 
+      // DASHBOARD
+      if ([...modalDashboard.options].some(opt => opt.value === ticket.dashboard)) {
+        modalDashboard.value = ticket.dashboard;
+      } else {
+        modalDashboard.value = 'Other';
+        customDashboard.style.display = 'block';
+        customDashboard.required = true;
+        customDashboard.value = ticket.dashboard;
+      }
+ 
+      // TICKET NO
+      modalTicketNo.value = ticket.ticketNo;
+ 
+      // RAISED BY
+      if (modalRaisedBy.querySelector(`option[value="${ticket.raisedBy}"]`)) {
+        modalRaisedBy.value = ticket.raisedBy;
+      } else {
+        modalRaisedBy.value = 'Other';
+        customRaisedBy.style.display = 'block';
+        customRaisedBy.required = true;
+        customRaisedBy.value = ticket.raisedBy;
+      }
+ 
+      // ✅ ASSIGNED TO (fixed undefined bug)
+      const assignee = ticket.assigned_to || ticket.assignedTo;
+      if (modalAssignedTo.querySelector(`option[value="${assignee}"]`)) {
+        modalAssignedTo.value = assignee;
+      } else {
+        modalAssignedTo.value = 'Other';
+        customAssignedTo.style.display = 'block';
+        customAssignedTo.required = true;
+        customAssignedTo.value = assignee;
+      }
+ 
+      // SUBJECT
+      if (modalSubject.querySelector(`option[value="${ticket.subject}"]`)) {
+        modalSubject.value = ticket.subject;
+      } else {
+        modalSubject.value = 'Other';
+        customSubject.style.display = 'block';
+        customSubject.required = true;
+        customSubject.value = ticket.subject;
+      }
+ 
+      // DATE LOGGED (read-only in edit)
+      modalDateLogged.value = formatForInputDate(ticket.dateLogged);
+      modalDateLogged.readOnly = true;             // 👈 shows value but not editable
+      modalDateLogged.disabled = false;            // 👈 keep it active (not gray)
+      modalDateLogged.removeAttribute("required"); // 👈 stop browser check
+ 
+      // CLOSED DATE (always visible, editable only if status Closed)
+      const today = new Date().toISOString().split('T')[0];
+      modalClosedDate.max = today;
+ 
+      if (ticket.status === 'Closed') {
+        modalClosedDate.disabled = false;
+        modalClosedDate.value = formatForInputDate(ticket.closedDate || today);
+      } else {
+        modalClosedDate.disabled = true;
+        modalClosedDate.value = formatForInputDate(ticket.closedDate || "");
+      }
+ 
+      // Others
+      modalPriority.value = ticket.priority;
+      modalStatus.value = ticket.status;
+      modalDescription.value = ticket.description;
+ 
+      document.getElementById('modalComments').value = '';
+      modalAttachment.value = '';
+ 
+      // Show modal
+      ticketModal.style.display = 'flex';
+      document.getElementById("deleteTicketButton").style.display = "inline-block";
+ 
+      // Role-based access
+      const formElements = document.querySelectorAll("#ticketForm input, #ticketForm select, #ticketForm textarea");
+      const submitButton = document.querySelector("#ticketForm button[type='submit']");
+ 
+      // Reset: enable everything by default
+      formElements.forEach(el => el.disabled = false);
+      submitButton.style.display = "inline-block";
+ 
+      // 🔒 Example: If status Closed, disable editing
+      if (ticket.status === "Closed") {
+        formElements.forEach(el => el.disabled = true);
+        submitButton.style.display = "none";
+      }
+    })
+    .catch(err => {
+      console.error("⚠️ Failed to populate streams/dashboards for edit:", err);
+      ticketModal.style.display = 'flex'; // still show modal as fallback
+    });
+}
+// OPEN ADD MODAL
+function openAddModal() {
+  editingIndex = null;
+  ticketForm.reset();
+
+  // Hide custom fields
+  customSubject.style.display = 'none';
+  customStream.style.display = 'none';
+  customDashboard.style.display = 'none';
+  customRaisedBy.style.display = 'none';
+  customAssignedTo.style.display = 'none';
+
+  // Reset streams/dashboards
+  populateStreams();
+
+  // Ticket No blank
+  modalTicketNo.value = "";
+
+  // DATE LOGGED (enabled in add)
+  modalDateLogged.value = "";
+  modalDateLogged.disabled = false;
+  modalDateLogged.removeAttribute("required");
+
+  // CLOSED DATE (disabled by default)
+  modalClosedDate.disabled = true;
+  modalClosedDate.value = '';
+  modalClosedDate.removeAttribute('max');
+
+  // Reset other fields
+  modalPriority.value = "";
+  modalStatus.value = "";
+  modalDescription.value = "";
+  document.getElementById('modalComments').value = "";
+  modalAttachment.value = "";
+
+  // Show modal
+  ticketModal.style.display = "flex";
+  document.getElementById("deleteTicketButton").style.display = "none";
+
+  // Enable form elements
+  const formElements = document.querySelectorAll("#ticketForm input, #ticketForm select, #ticketForm textarea");
+  const submitButton = document.querySelector("#ticketForm button[type='submit']");
+  formElements.forEach(el => el.disabled = false);
+  submitButton.style.display = "inline-block";
+}
+
+// STALE CHECK (fixed field names + typo)
+function isStaleTicket(ticket) {
+  const holdStatuses = ["On Hold (ARM Team)", "On Hold (SAAIT Team)"]; // fix typo
+  if (!holdStatuses.includes(ticket.status)) return false;
+
+  const loggedDate = new Date(ticket.date_logged); // fix field name
+  const today = new Date();
+  const diffInDays = (today - loggedDate) / (1000 * 60 * 60 * 24);
+  return diffInDays > 7;
+}
+
+function renderTickets() {
+  const statusVal = statusFilter.value;
+  const streamVal = streamFilter.value;
+  const priorityVal = priorityFilter.value;
+  const selectedMonth = monthFilter.value;
+
+  ticketTableBody.innerHTML = '';
+
+  tickets
+    .map((ticket, i) => ({ ticket, originalIndex: i }))
+    .filter(({ ticket }) => {
+      const norm = s => (s || '')
+        .toLowerCase()
+        .replace(/\(/g, ' ')
+        .replace(/\)/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const matchStatus   = !statusVal || norm(ticket.status) === norm(statusVal);
+      const matchStream   = !streamVal || ticket.stream === streamVal;
+      const matchPriority = !priorityVal || ticket.priority === priorityVal;
+
+      function extractMonth(dateStr) {
+        if (!dateStr) return null;
+        const d = new Date(dateStr);
+        if (isNaN(d)) return null;
+        return String(d.getMonth() + 1).padStart(2, '0');
+      }
+
+      const dateLoggedMonth = extractMonth(ticket.date_logged);
+      return matchStatus && matchStream && matchPriority && (!selectedMonth || dateLoggedMonth === selectedMonth);
+    })
+    .sort((a, b) => {
+      const slug = s => (s || '')
+        .toLowerCase()
+        .replace(/\(/g, ' ')
+        .replace(/\)/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .trim();
+
+      const statusOrder = {
+        'open': 1,
+        'in-progress': 2,
+        'on-hold-arm-team': 3,
+        'on-hold-saait-team': 4,
+        'on-demand-arm-team': 5,
+        'on-demand-saait-team': 6,
+        'closed': 7
+      };
+
+      const aKey = slug(a.ticket.status);
+      const bKey = slug(b.ticket.status);
+
+      const orderA = statusOrder[aKey] || 99;
+      const orderB = statusOrder[bKey] || 99;
+
+      if (aKey === 'closed' && bKey === 'closed') {
+        const dateA = new Date(a.ticket.closed_date || 0);
+        const dateB = new Date(b.ticket.closed_date || 0);
+        return dateB - dateA; // latest first
+      }
+
+      return orderA - orderB;
+    })
+    .forEach(({ ticket, originalIndex }) => {
+      const row = document.createElement('tr');
+
+      row.innerHTML = `
+        <td>${ticket.dashboard}</td>
+        <td>${ticket.ticket_no}</td>
+        <td>${ticket.stream}</td>
+        <td>${ticket.raised_by}</td>
+        <td>${ticket.assigned_to}</td>
+        <td>${ticket.subject}</td>
+        <td>${formatDate(ticket.date_logged)}</td>
+        <td>${formatDate(ticket.closed_date)}</td>
+
+        <!-- Priority -->
+        <td>
+          <span class="badge ${ticket.priority ? ticket.priority.toLowerCase() : ''}">
+            ${ticket.priority || '-'}
+          </span>
+        </td>
+
+        <!-- Status -->
+        <td>
+          <span class="badge ${
+            isStaleTicket(ticket) ? 'stale' :
+            (ticket.status || '')
+              .toLowerCase()
+              .replace(/\(/g, ' ')
+              .replace(/\)/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/--+/g, '-')
+          }">
+            ${ticket.status || '-'}
+          </span>
+        </td>
+
+        <!-- Description -->
+        <td class="description-cell">
+          <div class="desc-wrapper ${ticket.description.length > 100 ? '' : 'expanded'}">
+            <div class="desc-text">${ticket.description}</div>
+            <a href="javascript:void(0);" class="toggle-link" onclick="toggleDescription(this)">
+              ${ticket.description.length > 100 ? 'More' : ''}
+            </a>
+          </div>
+        </td>
+
+        <!-- Comments -->
+        <td class="comments-cell">
+          <div class="comment-wrapper">
+            <div class="comment-text">
+              ${(ticket.comments || '')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>')}
+            </div>
+            ${(ticket.comments && ticket.comments.length > 50)
+              ? `<a href="javascript:void(0);" class="toggle-link" onclick="toggleComment(this)">More</a>`
+              : ''}
+          </div>
+        </td>
+
+        <!-- Attachment -->
+        <td>
+          ${ticket.attachment
+            ? `<span class="attachment-pin" title="Click to view" onclick="openImageModal('${ticket.attachment}')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                     viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" class="horizontal-paperclip">
+                  <path d="M21.44 11.05l-8.49 8.49a5.5 5.5 0 0 1-7.78-7.78l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95"/>
+                </svg>
+              </span>`
+            : ''}
+        </td>
+
+        <!-- Edit -->
+        <td>
+          ${(role !== 'viewer')
+            ? `<button onclick="openEditModal(${originalIndex})">Edit</button>`
+            : '-'}
+        </td>
+      `;
+
+      if (ticket.attachment) {
+        const pin = row.querySelector('.attachment-pin');
+        pin.onclick = () => openImageModal(ticket.attachment);
+      }
+
+      ticketTableBody.appendChild(row);
+    });
+}
+
+// Close image preview modal on click
+document.getElementById('imageModal').onclick = () => {
+  document.getElementById('imageModal').style.display = 'none';
+};
+
+function loadTicketsFromBackend(source = '', streams = []) {
+  fetch('/get_user_info')
+    .then(res => res.json())
+    .then(user => {
+      userRole = (user.role || '').trim().toUpperCase();
+      console.log("🎯 User role from backend:", userRole);
+      console.log("🎯 Selected source (before override):", source, "Selected streams:", streams);
+
+      let computedSource = source;
+      if (!computedSource) {
+        if (userRole === 'ARM' || userRole === 'TLC') {
+          computedSource = userRole;
+        } else if (userRole === 'SAAIT') {
+          computedSource = '';
+        }
+      }
+
+      let url = '/get_tickets';
+      const params = [];
+      if (computedSource) {
+        params.push(`source=${encodeURIComponent(computedSource)}`);
+      }
+      if (streams.length > 0) {
+        params.push(`streams=${encodeURIComponent(streams.join(","))}`);
+      }
+      if (params.length > 0) {
+        url += "?" + params.join("&");
+      }
+
+      console.log("🔎 Fetching tickets from:", url);
+      return fetch(url);
+    })
+    .then(res => res.json())
+    .then(data => {
+      tickets = data.map(t => ({
+        id: t.id,
+        dashboard: t.dashboard,
+        ticket_no: t.ticket_no,
+        stream: t.stream,
+        raised_by: t.raised_by,
+        subject: t.subject,
+        date_logged: t.date_logged,
+        closed_date: t.closed_date,
+        priority: t.priority,
+        status: t.status,
+        assigned_to: t.assigned_to,
+        description: t.description,
+        comments: t.comments,
+        attachment: t.attachment
+      }));
+      renderTickets();
+    })
+    .catch(err => console.error('❌ Error loading tickets:', err));
+}
+
+//pin functions end
+ 
+document.getElementById('exportBtn').onclick = () => {
+  const rows = [[
+    'Dashboard', 'Ticket No', 'Stream', 'Raised By', 'Assigned To',
+    'Subject', 'Date Logged', 'Closed Date', 'Priority', 'Status',
+    'Description', 'Comments', 'Attachment'
+  ]];
+ 
+  const statusVal = statusFilter.value;
+  const streamVal = streamFilter.value;
+  const priorityVal = priorityFilter.value;
+  const selectedMonth = monthFilter.value;
+ 
+  tickets.forEach(ticket => {
+    const matchStatus = !statusVal || ticket.status.trim() === statusVal;
+    const matchStream = !streamVal || ticket.stream === streamVal;
+    const matchPriority = !priorityVal || ticket.priority === priorityVal;
+    const dateLoggedMonth = ticket.dateLogged?.slice(5, 7);
+    //const closedDateMonth = ticket.closedDate?.slice(5, 7);
+    const matchMonth = !selectedMonth || dateLoggedMonth === selectedMonth; //|| closedDateMonth === selectedMonth;
+ 
+    if (matchStatus && matchStream && matchPriority && matchMonth) {
+      rows.push([
+        ticket.dashboard,
+        ticket.ticketNo,
+        ticket.stream,
+        ticket.raisedBy,
+        ticket.assignedTo,
+        ticket.subject,
+        ticket.dateLogged,
+        ticket.closedDate,
+        ticket.priority,
+        ticket.status,
+        ticket.description?.replace(/[\r\n]+/g, ' ') || '',
+        ticket.comments?.replace(/[\r\n]+/g, ' ') || '',
+        ticket.attachment || '-'
+      ]);
+    }
+  });
+ 
+  if (rows.length === 1) {
+    alert("No tickets to export with current filters.");
+    return;
+  }
+ 
+  const csvContent = rows.map(row =>
+    row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+  ).join('\n');
+ 
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tickets_export.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+ 
+ document.getElementById('logoutBtn').onclick = () => {
+  const confirmLogout = confirm("Are you sure you want to logout?");
+  if (confirmLogout) {
+    try {
+      // ✅ Clear cached session info
+      sessionStorage.clear();
+      localStorage.clear(); // optional, only if you ever used localStorage
+    } catch (e) {
+      console.warn("⚠️ Failed to clear storage:", e);
+    }
+    // ✅ Redirect to backend logout route
+    window.location.href = "/logout";
+  }
+};
+
+ 
+modalStatus.onchange = () => {
+  const today = new Date().toISOString().split('T')[0]; // Format: yyyy-mm-dd
+ 
+  if (modalStatus.value === 'Closed') {
+    modalClosedDate.disabled = false;
+ 
+    // Set max attribute to today's date to prevent future dates
+    modalClosedDate.max = today;
+ 
+    // Auto-fill today's date if no value is set
+    if (!modalClosedDate.value) {
+      modalClosedDate.valueAsDate = new Date();
+    }
+  } else {
+    modalClosedDate.disabled = true;
+    modalClosedDate.value = '';
+ 
+    // Remove max attribute when not in use
+    modalClosedDate.removeAttribute('max');
+  }
+};
+ 
+function toggleDescription(link) {
+  const wrapper = link.closest('.desc-wrapper');
+  wrapper.classList.toggle('expanded');
+  link.innerText = wrapper.classList.contains('expanded') ? 'Less' : 'More';
+}
+ 
+document.getElementById('modalCancelBtn').onclick = ()=> {
+  ticketModal.style.display = 'none';
+};
+ 
+document.getElementById("deleteTicketButton").addEventListener("click", function () {
+  if (editingIndex === -1 || !tickets[editingIndex]) {
+    alert("Cannot delete. No ticket selected.");
+    return;
+  }
+ 
+  const ticketId = tickets[editingIndex].id;
+  console.log("✅ Deleting ticket ID:", ticketId); // This will show up in console when you click Delete
+ 
+  const confirmDelete = confirm("Are you sure you want to delete this ticket?");
+  if (!confirmDelete) return;
+ 
+  fetch(`/delete_ticket/${ticketId}`, {
+    method: "DELETE"
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message || "Ticket deleted");
+      editingIndex = -1;  // 🔁 reset so no ghost update occurs
+      ticketModal.style.display = "none";
+      loadTicketsFromBackend();
+    })
+    .catch(err => {
+      console.error("Error deleting ticket:", err);
+      alert("Failed to delete ticket.");
+    });
+});
+ 
+ 
+ 
+function toggleComment(link) {
+  const wrapper = link.closest('.comment-wrapper');
+  wrapper.classList.toggle('expanded');
+  link.innerText = wrapper.classList.contains('expanded') ? 'Less' : 'More';
+}
+ 
+window.addEventListener("load", () => {
+  const slicer = document.getElementById("sourceSlicer");
+ 
+  // helper to read all selected streams
+  function getSelectedStreams() {
+    const nodes = document.querySelectorAll('[name="stream-filter"]:checked');
+    return Array.from(nodes).map(n => n.value);
+  }
+ 
+  if (slicer) {
+    slicer.addEventListener("change", () => {
+      const selectedSource = slicer.value;   // '', 'ARM', 'TLC'
+      const selectedStreams = getSelectedStreams();  // e.g. ["Finance", "SCM"]
+ 
+      console.log("🎯 Slicer changed to:", selectedSource, "Streams:", selectedStreams);
+ 
+      loadTicketsFromBackend(selectedSource, selectedStreams);
+    });
+  }
+});
+ 
+ 
+function openImageModal(url) {
+  const modal = document.getElementById("imageModal");
+  const img = document.getElementById("imageModalContent");
+  img.src = url;
+  modal.style.display = "flex";
+}
+ 
+document.getElementById("imageModal").onclick = function () {
+  this.style.display = "none";  // close on click
+};
+ 
+ 
+</script>
+</body>
+</html>
+ 
+ 
+ 
+ 
+ 
