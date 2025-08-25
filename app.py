@@ -12,7 +12,7 @@ from flask_cors import CORS # type: ignore
 from werkzeug.utils import secure_filename # type: ignore
 from threading import Timer, Lock
  
-app = Flask(__name__)
+app = Flask(__name__) 
 app.secret_key = 'supersecretkey'
 # Logging
 logging.basicConfig(
