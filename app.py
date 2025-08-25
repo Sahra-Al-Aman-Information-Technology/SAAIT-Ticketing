@@ -72,12 +72,12 @@ import time, pyodbc, logging
 # SQL Server connection with retry logic
 def get_db_connection(retries=3, delay=2):
     conn_str = (
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=saaitserver1.database.windows.net;"
-        "DATABASE=saaitsqldb;"
-        "UID=ticketadmin;"
-        "PWD=Saait@tickets123;"
-    )
+    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+    f"SERVER={os.environ.get('SQL_SERVER')};"
+    f"DATABASE={os.environ.get('SQL_DATABASE')};"
+    f"UID={os.environ.get('SQL_USER')};"
+    f"PWD={os.environ.get('SQL_PASSWORD')};"
+)
     for attempt in range(1, retries + 1):
         try:
             logging.info(f"🔗 Attempting DB connection (try {attempt}/{retries})...")
