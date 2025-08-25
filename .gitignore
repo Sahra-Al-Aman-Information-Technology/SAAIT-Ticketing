@@ -25,3 +25,8 @@ backup/
 # System
 .DS_Store
 Thumbs.db
+
+uploads/
+
+# Backup files
+*.bak
