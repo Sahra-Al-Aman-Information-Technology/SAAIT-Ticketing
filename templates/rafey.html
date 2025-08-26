@@ -1272,16 +1272,16 @@ function formatForInputDate(dateStr) {
 function openEditModal(idx) {
   editingIndex = idx;
   const ticket = tickets[idx];
- 
+
   ticketForm.reset();
- 
+
   // Hide all custom fields initially
   customSubject.style.display = 'none';
   customStream.style.display = 'none';
   customDashboard.style.display = 'none';
   customRaisedBy.style.display = 'none';
   customAssignedTo.style.display = 'none';
- 
+
   // ✅ First load streams & dashboards from backend
   populateStreams(ticket.stream, ticket.dashboard)
     .then(() => {
@@ -1295,7 +1295,7 @@ function openEditModal(idx) {
         customStream.value = ticket.stream;
       }
       modalStream.dispatchEvent(new Event('change')); // refresh dashboards
- 
+
       // DASHBOARD
       if ([...modalDashboard.options].some(opt => opt.value === ticket.dashboard)) {
         modalDashboard.value = ticket.dashboard;
@@ -1305,22 +1305,22 @@ function openEditModal(idx) {
         customDashboard.required = true;
         customDashboard.value = ticket.dashboard;
       }
- 
-      // TICKET NO
-      modalTicketNo.value = ticket.ticketNo;
- 
-      // RAISED BY
-      if (modalRaisedBy.querySelector(`option[value="${ticket.raisedBy}"]`)) {
-        modalRaisedBy.value = ticket.raisedBy;
+
+      // TICKET NO (snake_case!)
+      modalTicketNo.value = ticket.ticket_no;
+
+      // RAISED BY (snake_case!)
+      if (modalRaisedBy.querySelector(`option[value="${ticket.raised_by}"]`)) {
+        modalRaisedBy.value = ticket.raised_by;
       } else {
         modalRaisedBy.value = 'Other';
         customRaisedBy.style.display = 'block';
         customRaisedBy.required = true;
-        customRaisedBy.value = ticket.raisedBy;
+        customRaisedBy.value = ticket.raised_by;
       }
- 
-      // ✅ ASSIGNED TO (fixed undefined bug)
-      const assignee = ticket.assigned_to || ticket.assignedTo;
+
+      // ASSIGNED TO (snake_case!)
+      const assignee = ticket.assigned_to;
       if (modalAssignedTo.querySelector(`option[value="${assignee}"]`)) {
         modalAssignedTo.value = assignee;
       } else {
@@ -1329,7 +1329,7 @@ function openEditModal(idx) {
         customAssignedTo.required = true;
         customAssignedTo.value = assignee;
       }
- 
+
       // SUBJECT
       if (modalSubject.querySelector(`option[value="${ticket.subject}"]`)) {
         modalSubject.value = ticket.subject;
@@ -1339,46 +1339,44 @@ function openEditModal(idx) {
         customSubject.required = true;
         customSubject.value = ticket.subject;
       }
- 
-      // DATE LOGGED (read-only in edit)
-      modalDateLogged.value = formatForInputDate(ticket.dateLogged);
-      modalDateLogged.readOnly = true;             // 👈 shows value but not editable
-      modalDateLogged.disabled = false;            // 👈 keep it active (not gray)
-      modalDateLogged.removeAttribute("required"); // 👈 stop browser check
- 
-      // CLOSED DATE (always visible, editable only if status Closed)
+
+      // DATE LOGGED (snake_case!)
+      modalDateLogged.value = formatForInputDate(ticket.date_logged);
+      modalDateLogged.readOnly = true;
+      modalDateLogged.disabled = false;
+      modalDateLogged.removeAttribute("required");
+
+      // CLOSED DATE (snake_case!)
       const today = new Date().toISOString().split('T')[0];
       modalClosedDate.max = today;
- 
+
       if (ticket.status === 'Closed') {
         modalClosedDate.disabled = false;
-        modalClosedDate.value = formatForInputDate(ticket.closedDate || today);
+        modalClosedDate.value = formatForInputDate(ticket.closed_date || today);
       } else {
         modalClosedDate.disabled = true;
-        modalClosedDate.value = formatForInputDate(ticket.closedDate || "");
+        modalClosedDate.value = formatForInputDate(ticket.closed_date || "");
       }
- 
+
       // Others
       modalPriority.value = ticket.priority;
       modalStatus.value = ticket.status;
       modalDescription.value = ticket.description;
- 
+
       document.getElementById('modalComments').value = '';
       modalAttachment.value = '';
- 
+
       // Show modal
       ticketModal.style.display = 'flex';
       document.getElementById("deleteTicketButton").style.display = "inline-block";
- 
+
       // Role-based access
       const formElements = document.querySelectorAll("#ticketForm input, #ticketForm select, #ticketForm textarea");
       const submitButton = document.querySelector("#ticketForm button[type='submit']");
- 
-      // Reset: enable everything by default
+
       formElements.forEach(el => el.disabled = false);
       submitButton.style.display = "inline-block";
- 
-      // 🔒 Example: If status Closed, disable editing
+
       if (ticket.status === "Closed") {
         formElements.forEach(el => el.disabled = true);
         submitButton.style.display = "none";
@@ -1386,53 +1384,8 @@ function openEditModal(idx) {
     })
     .catch(err => {
       console.error("⚠️ Failed to populate streams/dashboards for edit:", err);
-      ticketModal.style.display = 'flex'; // still show modal as fallback
+      ticketModal.style.display = 'flex';
     });
-}
-// OPEN ADD MODAL
-function openAddModal() {
-  editingIndex = null;
-  ticketForm.reset();
-
-  // Hide custom fields
-  customSubject.style.display = 'none';
-  customStream.style.display = 'none';
-  customDashboard.style.display = 'none';
-  customRaisedBy.style.display = 'none';
-  customAssignedTo.style.display = 'none';
-
-  // Reset streams/dashboards
-  populateStreams();
-
-  // Ticket No blank
-  modalTicketNo.value = "";
-
-  // DATE LOGGED (enabled in add)
-  modalDateLogged.value = "";
-  modalDateLogged.disabled = false;
-  modalDateLogged.removeAttribute("required");
-
-  // CLOSED DATE (disabled by default)
-  modalClosedDate.disabled = true;
-  modalClosedDate.value = '';
-  modalClosedDate.removeAttribute('max');
-
-  // Reset other fields
-  modalPriority.value = "";
-  modalStatus.value = "";
-  modalDescription.value = "";
-  document.getElementById('modalComments').value = "";
-  modalAttachment.value = "";
-
-  // Show modal
-  ticketModal.style.display = "flex";
-  document.getElementById("deleteTicketButton").style.display = "none";
-
-  // Enable form elements
-  const formElements = document.querySelectorAll("#ticketForm input, #ticketForm select, #ticketForm textarea");
-  const submitButton = document.querySelector("#ticketForm button[type='submit']");
-  formElements.forEach(el => el.disabled = false);
-  submitButton.style.display = "inline-block";
 }
 
 // STALE CHECK (fixed field names + typo)
