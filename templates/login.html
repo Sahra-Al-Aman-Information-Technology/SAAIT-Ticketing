@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f0f0f0; /* Light grey full screen */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      width: 700px;
+      max-width: 95%;
+      height: 450px;
+    }
+
+    /* Left side with logo */
+    .left-panel {
+      flex: 1;
+      background: linear-gradient(135deg, #2c2c2c, #444);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px;
+      color: #fff;
+    }
+
+    .left-panel img {
+      max-width: 120px;
+      margin-bottom: 20px;
+    }
+
+    .left-panel h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .left-panel p {
+      font-size: 14px;
+      color: #ccc;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* Right side with form */
+    .login-panel {
+      flex: 1;
+      background: #fff;
+      padding: 35px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-panel h2 {
+      color: #222;
+      margin-bottom: 20px;
+      font-size: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border 0.3s ease;
+    }
+
+    input:focus {
+      border: 1px solid #555;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #2c2c2c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #444;
+    }
+
+    .forgot-password {
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .forgot-password a {
+      font-size: 13px;
+      color: #444;
+      text-decoration: none;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      font-size: 0.9em;
+      min-height: 20px;
+    }
+
+    /* Falling leaves */
+    .leaves-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .leaf {
+      position: absolute;
+      top: -50px;
+      font-size: 24px;
+      animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- <div class="leaves-container" id="leavesContainer"></div> -->
+
+
+  <div class="container">
+    <!-- Left with logo -->
+    <div class="left-panel">
+      <img src="/static/FINAL LOGO SAAIT.png" alt="Logo" />
+      <h1>Welcome Back</h1>
+      <p>Log in to continue to your Ticketing Website <br> Powered By SAAIT  </br></p>
+    
+    </div>
+
+    <!-- Right with login form -->
+    <div class="login-panel">
+      <h2>Login</h2>
+      <div id="errorMsg" class="error"></div>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <div class="forgot-password">
+        <a href="#" onclick="forgotPassword()">Forgot Password?</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+ // ✅ Login form handling
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const errorMsg = document.getElementById("errorMsg");
+
+  try {
+    const response = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    console.log("🔐 Login response:", data);
+
+    if (data.success) {
+      // ✅ Save session info in frontend storage
+      sessionStorage.setItem("loggedIn", "true");
+      sessionStorage.setItem("username", data.username);
+      sessionStorage.setItem("role", data.role);
+      sessionStorage.setItem("client_id", data.client_id);
+      sessionStorage.setItem("name", data.username);
+
+      console.log(`✅ Login successful | Role: ${data.role} | ClientID: ${data.client_id}`);
+
+      // Redirect to main dashboard
+      setTimeout(() => {
+        window.location.href = "/Saait.html";
+      }, 200);
+    } else {
+      errorMsg.textContent = "❌ Invalid username or password";
+      console.warn("Login failed:", data.error);
+    }
+  } catch (error) {
+    console.error("⚠️ Login failed:", error);
+    errorMsg.textContent = "⚠️ Error logging in. Try again later.";
+  }
+});
+
+
+  // ✅ Forgot Password handling
+  async function forgotPassword() {
+    const username = document.getElementById("username").value.trim();
+    const errorMsg = document.getElementById("errorMsg");
+
+    if (!username) {
+      alert("⚠️ Please enter your username first.");
+      return;
+    }
+
+    try {
+      // Show loader message
+      errorMsg.textContent = "⏳ Sending password to your email...";
+
+      const response = await fetch("/forgot_password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert("✅ Your password has been sent to your registered email.");
+        errorMsg.textContent = "";
+      } else {
+        errorMsg.textContent = result.message || "❌ Failed to send password.";
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      errorMsg.textContent = "⚠️ Something went wrong. Try again later.";
+    }
+  }
+</script>
+
+</body>
+</html>

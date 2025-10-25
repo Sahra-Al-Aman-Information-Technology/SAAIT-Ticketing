@@ -1,0 +1,3573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ticket System</title>
+  <style>
+ 
+ 
+ html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+ 
+ 
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;         /* ✅ Makes full vertical space available */
+}
+ 
+header {
+  position: relative;
+  background-color: #010b13;
+  color: white;
+  font-weight: bold;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1em;
+  padding: 0 20px;
+}
+ 
+.header-logo {
+  height: 55px;
+  width: auto;
+  margin-right: 10px;
+}
+ 
+.main-content {
+  flex: 1;                    /* ✅ Fills space between header and footer */
+  padding: 20px;
+  overflow-y: auto;
+}
+ 
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: #f1f1f1;
+  color: #333;
+  font-size: 0.9em;
+  text-align: center;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  z-index: 1000; /* optional: keeps footer above other elements */
+}
+ 
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #f4f4f4;
+      position: relative;
+    }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      font-size: 0.9em;
+      display: inline-block;
+      min-width: 60px;
+    }
+ 
+     /* 🎯 PRIORITY BADGES */
+.badge.low {
+  background-color: #28a745;  /* Green */
+  color: white;
+}
+ 
+.badge.medium {
+  background-color: #ffc107;  /* Amber */
+  color: black;
+}
+ 
+.badge.high {
+  background-color: #dc3545;  /* Red */
+  color: white;
+}
+ 
+/* 📊 STATUS BADGES */
+.badge.open {
+  background-color: #dc3545;  /* Cyan / Info */
+  color: white;
+}
+ 
+.badge.in-progress {
+  background-color: #fd7e14;  /* Orange */
+  color: white;
+}
+ 
+.badge.closed {
+  background-color: #17a2b8;  /* Gray / Secondary */
+  color: white;
+}
+.badge.on-hold-arm-team {
+  background-color: #6c757d; /* Gray */
+  color: white;
+}
+.badge.stale {
+  background-color: #6c757d !important;  /* unique grey */
+  color: white;
+}
+ 
+.badge.on-hold-saait-team {
+  background-color: #5a6268; /* Darker Gray */
+  color: white;
+}
+ 
+ .badge.on-demand-arm-team {
+  background-color: #5a6268; /* ARM team color */
+  color: white;
+}
+
+.badge.on-demand-saait-team {
+  background-color: #007bff; /* SAAIT team color */
+  color: white;
+}
+
+.badge.on-hold {
+  background-color: #007bff; /* SAAIT team color */
+  color: white;
+}
+
+
+
+
+
+
+    button {
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      background-color: #020d19;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: small;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      width: 500px;
+      max-width: 90%;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00000055;
+      max-height: 90vh;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+    .modal-content label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+      width: 100%;
+      padding: 7px;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+    }
+    .modal-content textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-size: 1rem;
+    }
+    .modal-footer {
+      text-align: right;
+      margin-top: 15px;
+    }
+    .modal-footer button {
+      margin-left: 10px;
+    }
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+    }
+    .image-modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 8px;
+      box-shadow: 0 0 20px #00000099;
+      background: white;
+    }
+ 
+    /* ARM TICKETS label above Attachment column */
+    /* .attachment-header-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .attachment-header-container .arm-tickets-label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: #020d19;
+      cursor: default;
+      user-select: none;
+      background-color: #081b29;
+      padding: 3px 10px;
+      border-radius: 6px;
+      color: white;
+    } */
+ 
+    /* ARM logo above Edit column */
+    .edit-header-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0px;
+    }
+    .edit-header-container img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-bottom: -8px; /* 👈 Moved logo upward more */
+}
+ 
+ 
+   #description {
+  width: 100% !important;
+  min-height: 130px !important;  /* starting height */
+  font-size: 1rem !important;
+  padding: 10px !important;
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+ 
+    .filter-container {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: x-small;
+}
+ 
+.filter-container label {
+  font-weight: bold;
+  font-size: x-small;
+}
+ 
+.filter-container select {
+  width: 130px;           /* Same width */
+  height: 22px;           /* Slightly smaller height */
+  padding: 1px 5px;       /* Slightly reduced padding */
+  font-size: x-small;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+ 
+ 
+.attachment-pin {
+  display: inline-flex;
+  align-items: center;
+  transform: rotate(-135deg);
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+ 
+.horizontal-paperclip {
+  transform: rotate(0deg); /* Force no rotation */
+  transition: stroke 0.2s ease, transform 0.2s ease;
+}
+ 
+.attachment-pin:hover .horizontal-paperclip {
+  stroke: #007bff;
+  transform: scale(1.2);
+}
+ 
+ 
+.logout-button {
+  background-color: #000000;
+  color: #ffffff;
+  border: 1.2px solid #ffffff;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 550;
+  cursor: pointer;
+  margin-top: 7px; /* 👈 This moves it slightly downward */
+}
+ 
+ 
+.logout-button:hover {
+  background-color: #a80606;
+}
+ 
+ 
+ 
+/* Smaller but readable Date Logged and Closed Date columns */
+th.date-logged-header,
+td.date-logged-cell {
+  min-width: 80px;
+  max-width: 80px;
+  white-space: nowrap;
+}
+ 
+th.closed-date-header,
+td.closed-date-cell {
+  min-width: 80px;
+  max-width: 80px;
+  white-space: nowrap;
+}
+ 
+th.comments-header,
+td.comments-cell {
+  min-width: 200px;
+  max-width: 200px;
+  white-space: normal;         /* ✅ allow wrapping */
+  word-wrap: break-word;       /* ✅ break long words */
+  font-size: 0.8rem;           /* ✅ small text */
+  text-align: center;            /* better readability */
+}
+ 
+ 
+ .desc-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+ 
+.desc-wrapper.expanded .desc-text {
+  -webkit-line-clamp: unset;
+}
+ 
+.toggle-link {
+  color: #007bff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 4px;
+}
+ 
+ 
+ 
+.comment-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+ 
+.comment-wrapper.expanded .comment-text {
+  -webkit-line-clamp: unset;  
+}
+
+/* ===== Tooltip for Status History ===== */
+.status-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.status-tooltip .tooltip-content {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s;
+  position: absolute;
+  bottom: 125%; /* show above badge */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  z-index: 999;
+  white-space: pre-line;  /* allow line breaks */
+  text-align: left;
+}
+
+.status-tooltip:hover .tooltip-content {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+
+/* Bigger description field (for edit mode) */
+#descriptionEdit {
+  width: 100%;
+  min-height: 130px;   /* starting height */
+  font-size: 1rem;
+  padding: 10px;
+  resize: vertical;    /* user can resize */
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.btn {
+  background: #010b13;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn:hover {
+  background: #333;
+}
+
+/* Subject column width */
+th.subject-header,
+td.subject-cell {
+  min-width: 300px;   /* adjust as needed */
+  max-width: 300px;
+  white-space: normal;   /* allows wrapping */
+  word-wrap: break-word;
+}
+
+/* Stream, Stream2, Raised By, Ticket No, Assigned To same width */
+th.ticket-no-header,
+td.ticket-no-cell{
+   min-width: 100px;   /* adjust as needed */
+  max-width: 100px;
+  white-space: normal;   /* allows wrapping */
+  word-wrap: break-word;
+}
+
+
+
+th.stream-header,
+td.stream-cell,
+th.stream2-header,
+td.stream2-cell,
+th.raised-by-header,
+td.raised-by-cell,
+th.assigned-to-header,
+td.assigned-to-cell {
+  min-width: 130px;
+  max-width: 130px;
+   white-space: normal;   /* allows wrapping */
+  word-wrap: break-word;
+}
+
+
+/* Override all button hover colors */
+button:hover,
+.btn:hover {
+  background: #6c757d !important;  /* gray */
+  color: #fff !important;
+}
+
+/* Make the View button smaller */
+.view-btn {
+  padding: 4px 6px;       /* very compact */
+  font-size: 0.8rem;      /* smaller text */
+  border-radius: 3px;     /* tighter corners */
+  margin: 0;
+}
+
+/* Narrow the View column */
+th.view-header,
+td.view-cell {
+  width: 60px;            /* fixed narrow width */
+  text-align: center;
+}
+ 
+.small-view-btn {
+  padding: 2px 5px;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  margin-top: 4px;
+}
+
+/* Priority colors */
+.priority-low { color: #28a745; }
+.priority-medium { color: #ffc107; }
+.priority-high { color: #dc3545; }
+
+/* Status colors */
+.status-open { color: #dc3545; }
+.status-in-progress { color: #fd7e14; }
+.status-closed { color: #17a2b8; }
+.status-on-hold { color: #007bff; }
+
+/* Table lines darker and row height smaller */
+table, th, td {
+  border: 1.5px solid #b8b5b5; /* Darker border */
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 2px 4px; /* Smaller padding */
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+.logout-button {
+    background-color: #000;
+    color: #fff;
+    border: 1.2px solid #fff;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 550;
+    cursor: pointer;
+    margin-top: 7px;
+}
+
+ 
+ 
+/* ✅ Fix default text color for Priority and Status in the ticket table */
+#ticketTableBody td:nth-child(9),
+#ticketTableBody td:nth-child(10) {
+  color: black !important;
+  
+}
+
+.badge {
+
+  background-color: #d3d3d3; /* Light gray background for default */
+
+  color: black;             /* Black text for visibility */
+
+}
+
+ 
+
+
+
+</style>
+ 
+</head>
+<body>
+
+
+
+<header id="mainHeader">
+<div style="display: flex; align-items: center; width: 100%;">
+<!-- Logo -->
+<img src="/static/FINAL LOGO SAAIT.png" alt="Logo" class="header-logo" />
+<!-- Title -->
+<div class="header-title" style="flex-grow: 1; text-align: center; font-size: 23px; font-style: oblique;">
+ 
+      SAAIT TICKETING SYSTEM
+</div>
+ 
+    {% if role == "SAAIT" %}
+<!-- Dropdown buttons group -->
+<div style="display: flex; align-items: center; gap: 12px;">
+<!-- Client Dropdown -->
+<div class="dropdown" style="margin-right: 6px;">
+<button id="clientBtn" class="logout-button" style="margin: 7px 0;">Client</button>
+<!-- <div id="clientDropdown" class="dropdown-content" style="display:none;">
+<a href="/createclient" id="createClient">Create Client</a>
+<a href="/viewclients" id="viewClient">View Client</a>
+</div> -->
+</div>
+<!-- Project Dropdown -->
+<div class="dropdown" style="margin-right: 6px;">
+<button id="projectBtn" class="logout-button" style="margin: 7px 0;">Project</button>
+<!-- <div id="projectDropdown" class="dropdown-content" style="display:none;">
+<a href="/createproject" id="createProject">Create Project</a>
+<a href="/view_projects" id="viewProject">View Project</a>
+</div> -->
+</div>
+</div>
+ 
+    {% endif %}
+ 
+    <!-- Logout Button -->
+<button id="logoutBtn" class="logout-button" style="margin: 7px 0;">Logout</button>
+</div>
+</header>
+ 
+ 
+
+ 
+ 
+<!-- Create Client Modal -->
+  <div id="createClientModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span id="closeModal" class="close-btn">&times;</span>
+      <h3>Create Client</h3>
+      <form id="createClientForm">
+ 
+        <!-- ClientID (Readonly, Auto-Filled) -->
+        <label for="ClientID">Client ID</label>
+        <input type="text" id="ClientID" name="ClientID" readonly />
+ 
+        <label for="ClientName">Client Name</label>
+        <input type="text" id="ClientName" name="ClientName" placeholder="Enter Client Name" required />
+ 
+        <label for="Email">Email</label>
+        <input type="email" id="Email" name="Email" placeholder="Enter Email" required />
+ 
+        <label for="CreatedDate">Created Date</label>
+        <input type="date" id="CreatedDate" name="CreatedDate" />
+ 
+        <label for="Status">Status</label>
+        <select id="Status" name="Status" required>
+          <option value="Active" selected>Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+ 
+        <div class="modal-actions">
+          <button type="submit" id="submitClientBtn">Submit</button>
+          <button type="button" id="cancelModal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+ 
+ 
+
+
+ 
+ 
+<div class="main-content">
+  <div style="display: flex; gap: 10px; margin-bottom: 10px;"> <button id="addTicketButton">Add Ticket</button> <button
+      id="exportBtn">Export</button>
+     
+    {% if role == "SAAIT" %}
+    <button id="userBtn" onclick="window.location.href='/users.html'">Users</button>
+    {% endif %}
+ 
+   
+    </div>
+ 
+ 
+
+<!-- <div style="
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -50px;
+  margin-bottom: 10px;
+">
+  <div id="ticketInfo" style="display: flex; align-items: center; gap: 8px;">
+    <label id="ticketSystemLabel" style="
+      display: inline-block;
+      padding: 6px 10px;
+      background-color: #020d19;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: small;
+      font-family: Arial, sans-serif;
+      line-height: normal;
+      vertical-align: middle;
+      margin: 0;
+    ">
+      ARM TICKETS
+    </label>
+ 
+    <img id="ticketLogo" src="{{ url_for('static', filename='arm LOGO.jpeg') }}" alt="ARM Logo"
+         style="height: 27px; border-radius: 4px;" />
+  </div>
+</div>
+  -->
+ 
+ 
+ 
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+<div class="filter-container" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; font-size: small;">
+ 
+ 
+  <!-- ✅ Wrap label + slicer in a span with correct ID -->
+<span id="multiStreamLabel" style="display: none; align-items: center; gap: 5px;">
+  <label for="sourceSlicer" style="font-size: small;">Multi Streams :</label>
+  <select id="sourceSlicer" style="font-size: small;">
+    <option value="">All Tickets</option>
+    <option value="ARM">ARM Tickets</option>
+    <option value="TLC">TLC Tickets</option>
+    <option value="SAH">SAH Tickets</option>
+  </select>
+</span>
+ 
+         <div id="selectClientModal" class="modal"
+          style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+          <div class="modal-content"
+            style="text-align:center; padding:20px; background:white; border-radius:8px; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">
+            <h3>Select Client</h3>
+            <select id="selectClientDropdown" style="padding:10px 20px; width: 80%;">
+              <option value="">Select Client</option>
+            </select>
+            <button id="closeClientModal" style="margin-top:15px;">Cancel</button>
+          </div>
+        </div>
+ 
+ 
+ 
+<label for="statusFilter" style="font-size: small;">Status :</label>
+<select id="statusFilter" style="font-size: small;">
+  <option value="">All</option>
+</select>
+
+
+<label for="streamFilter" style="font-size: small;">Stream :</label>
+<select id="streamFilter" style="font-size: small;">
+  <option value="">Streams</option>
+</select>
+
+
+
+
+
+
+
+    <label for="priorityFilter" style="font-size: small;">Priority :</label>
+<select id="priorityFilter" style="font-size: small;">
+<option value="">All</option>
+<option value="Low">Low</option>
+<option value="Medium">Medium</option>
+<option value="High">High</option>
+</select>
+ 
+    <label for="monthFilter" style="font-size: small;">Month:</label>
+<select id="monthFilter" style="font-size: small;">
+<option value="">All</option>
+<option value="01">January</option>
+<option value="02">February</option>
+<option value="03">March</option>
+<option value="04">April</option>
+<option value="05">May</option>
+<option value="06">June</option>
+<option value="07">July</option>
+<option value="08">August</option>
+<option value="09">September</option>
+<option value="10">October</option>
+<option value="11">November</option>
+<option value="12">December</option>
+</select>
+ 
+    <button id="clearFiltersBtn" style="
+      padding: 6px 12px;
+      font-size: small;
+      background-color: #020d19;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      height: 25px;
+      margin-left: 10px;
+      margin-top: 8px;
+    ">
+      Clear
+</button>
+</div>
+</div>
+ 
+ 
+<!-- 🎯 Slicer Section (Only visible for SAAIT) -->
+<div id="filterBar" style="
+  display: flex;
+  flex-wrap: wrap;
+  align-items: left;
+  gap: 14px;
+  padding: 10px 0;
+">
+ 
+ 
+ 
+<table style="margin-top: -10px; width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th class="ticket-no-header">Ticket No</th>
+      <th class="stream-header">Stream</th>
+      <th id="tableDashboardHeader">Stream 2</th>
+      <th class="raised-by-header">Raised By</th>
+      <th class="assigned-to-header">Assigned To</th>
+      <th class="subject-header">Subject</th>
+      <th class="date-logged-header">Date Logged</th>
+      <th class="closed-date-header">Closed Date</th>
+      <th>Priority</th>
+      <th>Status</th>
+      <th class="view-header">
+        <div class="edit-header-container">View</div>
+      </th>
+    </tr>
+  </thead>
+  <tbody id="ticketTableBody"></tbody>
+</table>
+
+       
+      </tr>
+    </thead>
+    <tbody id="ticketTableBody"></tbody>
+  </table>
+</div>
+ 
+<footer>
+  <div>Powered by SAAIT</div>
+</footer>
+
+<div id="ticketModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Add Ticket</h3>
+    <form id="ticketForm">
+
+      <label for="modalProject">Project</label>
+<select id="modalProject" required>
+  <option value="">Select Project</option>
+</select>
+      <label id="modalStreamLabel">Stream</label>
+      <select id="modalStream" required>
+        <option value="">Select Stream</option>
+        <!-- Options loaded via JS -->
+      </select>
+      <input id="customStream" name="customStream" type="text" style="display: none;" placeholder="Enter custom stream" />
+
+      <!-- Shared label for both Report Name (TLC) and Stream 2 (ARM/SAAIT) -->
+      <label id="modalDashboardLabel">Stream 2</label>
+
+      <!-- Dropdown: used only for ARM / SAAIT -->
+      <select id="modalDashboard" name="dashboard">
+        <option value="">Select Stream 2</option>
+      </select>
+
+      <!-- Input: used only for TLC -->
+      <input id="customDashboard" name="dashboard" type="text" placeholder="Enter Report Name" style="display:none;" />
+
+      <label>Ticket No.</label>
+      <input type="text" id="modalTicketNo" required readonly>
+
+      <label for="modalRaisedBy">Raised By</label>
+      <select id="modalRaisedBy" required>
+        <option value="">Select User</option>
+      </select>
+      <input id="customRaisedBy" name="customRaisedBy" type="text" style="display:none;" placeholder="Enter raised by name">
+
+      <label for="modalAssignedTo">Assigned To</label>
+      <select id="modalAssignedTo" name="assigned_to" required>
+        <option value="">Select Assignee</option>
+      </select>
+      <input id="customAssignedTo" name="custom_assigned_to" type="text" style="display:none;" placeholder="Enter assignee name">
+
+      <label>Subject</label>
+      <select id="modalSubject" required>
+   <option value="">Select Subject</option>
+</select>
+      <input id="customSubject" name="customSubject" type="text" style="display:none;" placeholder="Enter custom subject">
+
+      <label>Date Logged</label>
+      <input type="date" id="modalDateLogged" name="date_logged">
+
+      <label>Closed Date</label>
+      <input type="date" id="modalClosedDate" disabled>
+
+      <label>Priority</label>
+      <select id="modalPriority" required>
+   <option value="">Select Priority</option>
+</select>
+
+
+      <label>Status</label>
+      <select id="modalStatus" required>
+   <option value="">Select Status</option>
+</select>
+
+
+      <label for="descriptionEdit">Description:</label><br>
+<textarea id="descriptionEdit" name="description" style="width:100%; min-height:150px; font-size:14px; padding:8px; resize: vertical;"></textarea>
+
+ 
+      <label>Comments</label>
+      <textarea id="modalComments" rows="3" placeholder="Optional comment..."></textarea>
+
+      <label>Attachment</label>
+      <input type="file" id="modalAttachment" accept="image/*">
+
+      <div class="modal-footer">
+        <button type="button" id="modalCancelBtn">Cancel</button>
+        <button type="submit">Save</button>
+        <button id="deleteTicketButton" style="display: none; background-color: red; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 10px;">
+          Delete
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="imageModal" class="image-modal">
+  <img id="imageModalContent" src="" alt="Attachment Preview" />
+</div>
+
+
+<script>
+
+// === Prevent double submissions ===
+window.isAddingTicket = window.isAddingTicket || false;
+
+// adapt these selectors to your page
+const addTicketForm = document.getElementById('ticketForm') || document.getElementById('addTicketForm');
+const saveTicketBtn = document.getElementById('saveTicketBtn') || document.querySelector('#ticketModal button[type="submit"], #saveTicketBtn, #addTicketButton');
+
+if (addTicketForm && saveTicketBtn) {
+  // ensure we only attach once
+  if (!saveTicketBtn.dataset.listenerAttached) {
+    addTicketForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (window.isAddingTicket) return;          // guard
+      window.isAddingTicket = true;
+      saveTicketBtn.disabled = true;
+
+      try {
+        const formData = new FormData(addTicketForm);
+
+        // send add request
+        const resp = await fetch('/add_ticket', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await resp.json();
+        if (!resp.ok) {
+          alert(result.error || 'Failed to add ticket');
+        } else {
+          // authoritative reload from server
+          if (typeof loadTickets === 'function') {
+            await loadTickets();
+          } else if (typeof loadTicketsFromBackend === 'function') {
+            await loadTicketsFromBackend();
+          } else {
+            // fallback: refresh page
+            location.reload();
+          }
+        }
+      } catch (err) {
+        console.error('Add ticket error', err);
+        alert('Network error while adding ticket');
+      } finally {
+        window.isAddingTicket = false;
+        saveTicketBtn.disabled = false;
+      }
+    });
+
+    saveTicketBtn.dataset.listenerAttached = '1';
+  }
+}
+
+  
+ 
+ function formatDate(dateStr) {
+  if (!dateStr || dateStr === 'null') return '';
+  const parts = dateStr.split('-'); // "YYYY-MM-DD"
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${day}-${month}-${year}`;
+}
+
+
+
+
+
+
+
+ 
+ 
+ let userRole = "";
+let tickets = [];  // 👈 must exist globally and used by renderTickets()
+ 
+// ✅ Use actual role from sessionStorage instead of hardcoding "ARM"
+const TICKET_PREFIX = sessionStorage.getItem("role") || "";
+ 
+// Track if editing or adding
+let editingIndex = -1;
+ 
+  
+ 
+  const addTicketButton = document.getElementById('addTicketButton');
+    const selectClientDropdown = document.getElementById("selectClientDropdown");
+  const ticketModal = document.getElementById('ticketModal');
+  const ticketForm = document.getElementById('ticketForm');
+  const ticketTableBody = document.getElementById('ticketTableBody');
+  
+  const modalProject = document.getElementById("modalProject");
+  const modalStream = document.getElementById('modalStream');
+  const modalDashboard = document.getElementById('modalDashboard');
+  const modalTicketNo = document.getElementById('modalTicketNo');
+  const modalRaisedBy = document.getElementById('modalRaisedBy');
+  const modalSubject = document.getElementById('modalSubject');
+  const customSubject = document.getElementById('customSubject');
+  const modalDateLogged = document.getElementById('modalDateLogged');
+  const modalClosedDate = document.getElementById('modalClosedDate');
+  const modalPriority = document.getElementById('modalPriority');
+  const modalStatus = document.getElementById('modalStatus');
+  const modalAssignedTo = document.getElementById('modalAssignedTo');
+  const modalDescription = document.getElementById('descriptionEdit');
+
+  const modalAttachment = document.getElementById('modalAttachment');
+  const customRaisedBy = document.getElementById('customRaisedBy');   // ✅ FIXED: declared early
+  const customAssignedTo = document.getElementById('customAssignedTo'); // ✅ FIXED
+  const customStream = document.getElementById("customStream");       // ✅ FIXED
+  const customDashboard = document.getElementById("customDashboard"); // fixed
+  const statusFilter = document.getElementById('statusFilter');
+  const streamFilter = document.getElementById('streamFilter');
+  const priorityFilter = document.getElementById('priorityFilter');
+  const monthFilter = document.getElementById('monthFilter');
+ 
+  // ✅ Auto-enable and auto-fill Closed Date when Status = Closed
+
+modalStatus.addEventListener("change", () => {
+
+  const statusValue = modalStatus.options[modalStatus.selectedIndex]?.textContent?.trim() || "";
+
+  if (statusValue.toLowerCase() === "closed") {
+
+    modalClosedDate.disabled = false;
+ 
+    // set today's date in yyyy-mm-dd format
+
+    const today = new Date();
+
+    const yyyy = today.getFullYear();
+
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+
+    const dd = String(today.getDate()).padStart(2, "0");
+
+    modalClosedDate.value = `${yyyy}-${mm}-${dd}`;
+
+  } else {
+
+    modalClosedDate.disabled = true;
+
+    modalClosedDate.value = "";
+
+  }
+
+});
+
+ 
+
+// ------------------ Persist & restore slicer state ------------------
+
+// Save current filters into sessionStorage
+function saveFilters() {
+  try {
+    sessionStorage.setItem("statusFilter", statusFilter?.value || "");
+    sessionStorage.setItem("streamFilter", streamFilter?.value || "");
+    sessionStorage.setItem("priorityFilter", priorityFilter?.value || "");
+    sessionStorage.setItem("monthFilter", monthFilter?.value || "");
+    const slicerEl = document.getElementById("sourceSlicer");
+    if (slicerEl) sessionStorage.setItem("sourceSlicer", slicerEl.value || "");
+  } catch (e) {
+    console.warn("saveFilters error", e);
+  }
+}
+
+// Return selected streams as an array for backend calls
+function getSelectedStreams() {
+  if (!streamFilter) return [];
+  return streamFilter.value ? [streamFilter.value] : [];
+}
+
+// Restore filters from sessionStorage (safe about stream options not yet populated)
+function restoreFilters() {
+  try {
+    const sVal = sessionStorage.getItem("statusFilter");
+    if (sVal !== null && statusFilter) statusFilter.value = sVal;
+
+    const pVal = sessionStorage.getItem("priorityFilter");
+    if (pVal !== null && priorityFilter) priorityFilter.value = pVal;
+
+    const mVal = sessionStorage.getItem("monthFilter");
+    if (mVal !== null && monthFilter) monthFilter.value = mVal;
+
+    // Stream: may require waiting until options are populated
+    const storedStream = sessionStorage.getItem("streamFilter");
+    if (storedStream !== null && streamFilter) {
+      // If option exists now, set immediately
+      if ([...streamFilter.options].some(o => o.value === storedStream)) {
+        streamFilter.value = storedStream;
+      } else {
+        // try again shortly after (populateStreamFilter is async)
+        setTimeout(() => {
+          if ([...streamFilter.options].some(o => o.value === storedStream)) {
+            streamFilter.value = storedStream;
+          }
+        }, 250);
+      }
+    }
+
+    // Source slicer
+    const slicerEl = document.getElementById("sourceSlicer");
+    const storedSlicer = sessionStorage.getItem("sourceSlicer");
+    if (slicerEl && storedSlicer !== null) slicerEl.value = storedSlicer;
+
+  } catch (e) {
+    console.warn("restoreFilters error", e);
+  }
+}
+
+// Attach change handlers that save state and update UI/backend
+statusFilter.addEventListener("change", () => { saveFilters(); renderTickets(); });
+priorityFilter.addEventListener("change", () => { saveFilters(); renderTickets(); });
+monthFilter.addEventListener("change", () => { saveFilters(); renderTickets(); });
+
+// streamFilter -> will fetch backend filtered data (and also re-render)
+streamFilter.addEventListener("change", () => {
+  saveFilters();
+  const slicerEl = document.getElementById("sourceSlicer");
+  const source = slicerEl ? slicerEl.value : "";
+  loadTicketsFromBackend(source, getSelectedStreams());
+});
+
+// sourceSlicer (if present) -> fetch backend
+const sourceSlicerEl = document.getElementById("sourceSlicer");
+if (sourceSlicerEl) {
+  sourceSlicerEl.addEventListener("change", () => {
+    saveFilters();
+    loadTicketsFromBackend(sourceSlicerEl.value, getSelectedStreams());
+  });
+}
+
+// ✅ Clear Filters Button Logic
+document.getElementById('clearFiltersBtn').onclick = () => {
+  // reset UI
+  statusFilter.value = '';
+  streamFilter.value = '';
+  priorityFilter.value = '';
+  monthFilter.value = '';
+
+  const slicer = document.getElementById('sourceSlicer');
+  if (slicer) slicer.value = '';
+
+  // clear saved state
+  sessionStorage.removeItem("statusFilter");
+  sessionStorage.removeItem("streamFilter");
+  sessionStorage.removeItem("priorityFilter");
+  sessionStorage.removeItem("monthFilter");
+  sessionStorage.removeItem("sourceSlicer");
+
+  // reload tickets (use current slicer if present)
+  const source = slicer ? slicer.value : "";
+  loadTicketsFromBackend(source, getSelectedStreams());
+};
+
+// Load all projects from backend
+// Load projects for a selected client
+// Load Clients → Projects → then other dropdowns dynamically
+async function loadClients() {
+  try {
+    const res = await fetch("/get_clients");
+    const clients = await res.json();
+    const clientDropdown = document.getElementById("selectClientDropdown");
+    clientDropdown.innerHTML = '<option value="">Select Client</option>';
+    clients.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.ClientID;
+      opt.textContent = c.ClientName;
+      clientDropdown.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("❌ Failed to load clients:", err);
+  }
+}
+
+document.getElementById("selectClientDropdown").addEventListener("change", function () {
+  const clientId = this.value;
+  loadProjectsDropdown(clientId); // ✅ correct call
+});
+
+
+// // When client changes → load its projects
+// document.getElementById("selectClientDropdown").addEventListener("change", async function() {
+//   const clientId = this.value;
+//   if (!clientId) return;
+//   try {
+//     const res = await fetch(`/get_projects_by_client/${clientId}`);
+//     const projects = await res.json();
+//     modalProject.innerHTML = '<option value="">Select Project</option>';
+//     projects.forEach(p => {
+//       const opt = document.createElement("option");
+//       opt.value = p.id;
+//   opt.textContent = p.name;
+//       modalProject.appendChild(opt);
+//     });
+//   } catch (err) {
+//     console.error("❌ Failed to load projects:", err);
+//   }
+// });
+
+
+async function loadProjectsDropdown(clientId) {
+  try {
+    if (!clientId) {
+      modalProject.innerHTML = '<option value="">Select Project</option>';
+      return;
+    }
+
+    const res = await fetch(`/get_projects_by_client?client_id=${encodeURIComponent(clientId)}`);
+    const projects = await res.json();
+    console.log("Projects fetched:", projects);
+
+    modalProject.innerHTML = '<option value="">Select Project</option>';
+    if (Array.isArray(projects) && projects.length > 0) {
+      projects.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name;
+        modalProject.appendChild(opt);
+      });
+    } else {
+      modalProject.innerHTML = '<option value="">No projects found</option>';
+    }
+  } catch (err) {
+    console.error("❌ Failed to load projects:", err);
+    modalProject.innerHTML = '<option value="">Failed to load</option>';
+  }
+}
+
+
+
+// document.addEventListener("DOMContentLoaded", () => {
+//   const role = sessionStorage.getItem("role");
+//   console.log("Current role:", role);
+
+
+// if (role === "SAAIT") {
+  // 🟢 ADMIN LOGIC: Project-based dropdowns
+  modalProject.addEventListener("change", async function () {
+  const projectId = this.value;
+  if (!projectId) return;
+
+  // Cache DOM elements
+  const modalStream = document.getElementById("modalStream");
+  const modalDashboard = document.getElementById("modalDashboard");
+  const modalSubject = document.getElementById("modalSubject");
+  const modalPriority = document.getElementById("modalPriority");
+  const modalStatus = document.getElementById("modalStatus");
+  const raisedBy = document.getElementById("modalRaisedBy");
+  const assignedTo = document.getElementById("modalAssignedTo");
+
+  // Reset dependent dropdowns while loading
+  const resetSelect = (el, label) => {
+    el.innerHTML = `<option value="">Loading ${label}...</option>`;
+  };
+  resetSelect(modalStream, "Streams");
+  resetSelect(modalDashboard, "Stream 2");
+  resetSelect(modalSubject, "Subjects");
+  resetSelect(modalPriority, "Priorities");
+  resetSelect(modalStatus, "Statuses");
+  resetSelect(raisedBy, "Users");
+  resetSelect(assignedTo, "Users");
+
+  try {
+  // ✅ Corrected: use client_id instead of project_id
+   const res = await fetch(`/getstreamsbyprojects?projectid=${encodeURIComponent(projectId)}`);
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+  const streamData = await res.json(); // correctly parse JSON
+
+  modalStream.innerHTML = '<option value="">Select Stream</option>';
+  modalDashboard.innerHTML = '<option value="">Select Stream 2</option>';
+
+  if (streamData && streamData.streamsmap) {
+    // Populate Stream 1 dropdown
+    const stream1List = Object.keys(streamData.streamsmap);
+    stream1List.forEach(stream1 => {
+      const opt = document.createElement("option");
+      opt.value = stream1;
+      opt.textContent = stream1;
+      modalStream.appendChild(opt);
+    });
+
+    // When Stream 1 changes → populate Stream 2
+    modalStream.addEventListener("change", () => {
+      const selectedStream1 = modalStream.value;
+      modalDashboard.innerHTML = '<option value="">Select Stream 2</option>';
+
+      if (selectedStream1 && streamData.streamsmap[selectedStream1]) {
+        streamData.streamsmap[selectedStream1].forEach(stream2 => {
+          const opt = document.createElement("option");
+          opt.value = stream2;
+          opt.textContent = stream2;
+          modalDashboard.appendChild(opt);
+        });
+      }
+    });
+  } else {
+    console.warn("⚠️ No streams found for this project.");
+  }
+
+  // ✅ Continue with your existing code for subjects, priorities, statuses, etc.
+  const resSubjects = await fetch(`/get_subjects?project_id=${encodeURIComponent(projectId)}`);
+const subjects = await resSubjects.json();
+  modalSubject.innerHTML = '<option value="">Select Subject</option>';
+  if (Array.isArray(subjects)) {
+    subjects.forEach(sub => {
+      const opt = document.createElement("option");
+      opt.value = sub.SubjectID;
+      opt.textContent = sub.SubjectName;
+      modalSubject.appendChild(opt);
+    });
+  }
+
+  const resPriorities = await fetch(`/get_priorities?project_id=${encodeURIComponent(projectId)}`);
+const priorities = await resPriorities.json();
+  modalPriority.innerHTML = '<option value="">Select Priority</option>';
+  if (Array.isArray(priorities)) {
+    priorities.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.PriorityID;
+      opt.textContent = p.PriorityName;
+      modalPriority.appendChild(opt);
+    });
+  }
+
+  const resStatuses = await fetch(`/get_statuses?project_id=${encodeURIComponent(projectId)}`);
+const statuses = await resStatuses.json();
+
+  modalStatus.innerHTML = '<option value="">Select Status</option>';
+  if (Array.isArray(statuses)) {
+    statuses.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.StatusID;
+      opt.textContent = s.StatusName;
+      modalStatus.appendChild(opt);
+    });
+  }
+   // 5️⃣ Users (Raised By & Assigned To)
+
+const resUsers = await fetch(`/getprojectusers?projectid=${encodeURIComponent(projectId)}`);
+
+const users = await resUsers.json();
+ 
+// Clear existing dropdowns
+
+raisedBy.innerHTML = '<option value="">Select User</option>';
+
+assignedTo.innerHTML = '<option value="">Select Assignee</option>';
+ 
+if (Array.isArray(users)) {
+
+  users.forEach(u => {
+
+    // ✅ Show in Raised By dropdown if:
+
+    //  - User has isRaisedBy = 1
+
+    //  - OR neither flag is set (default both dropdowns)
+
+    if (u.isRaisedBy === 1 || (u.isRaisedBy === 0 && u.isAssignedTo === 0)) {
+
+      const opt = document.createElement("option");
+
+      opt.value = u.userid;
+
+      opt.textContent = u.username;
+
+      raisedBy.appendChild(opt);
+
+    }
+ 
+    // ✅ Show in Assigned To dropdown if:
+
+    //  - User has isAssignedTo = 1
+
+    //  - OR neither flag is set (default both dropdowns)
+
+    if (u.isAssignedTo === 1 || (u.isRaisedBy === 0 && u.isAssignedTo === 0)) {
+
+      const opt = document.createElement("option");
+
+      opt.value = u.userid;
+
+      opt.textContent = u.username;
+
+      assignedTo.appendChild(opt);
+
+    }
+
+  });
+
+}
+ 
+} catch (err) {
+
+  console.error("❌ Error loading project-dependent data:", err);
+
+  modalStream.innerHTML = '<option value="">Failed to load Stream</option>';
+
+  modalDashboard.innerHTML = '<option value="">Failed to load Stream 2</option>';
+
+  modalSubject.innerHTML = '<option value="">Failed to load Subjects</option>';
+
+  modalPriority.innerHTML = '<option value="">Failed to load Priorities</option>';
+
+  modalStatus.innerHTML = '<option value="">Failed to load Statuses</option>';
+
+  raisedBy.innerHTML = '<option value="">Failed to load Users</option>';
+
+  assignedTo.innerHTML = '<option value="">Failed to load Users</option>';
+
+}
+
+});
+
+// ✅ EXPORT TICKETS TO CSV
+document.getElementById("exportBtn")?.addEventListener("click", () => {
+  try {
+    // Find your table or dataset
+    const table = document.querySelector("#ticketTableBody");
+    if (!table) {
+      alert("No tickets table found!");
+      return;
+    }
+
+    // Build CSV string
+    const rows = Array.from(table.querySelectorAll("tr"));
+    const csv = rows
+      .map(row =>
+        Array.from(row.querySelectorAll("th, td"))
+          .map(cell => `"${cell.innerText.replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+
+    // Download file
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tickets_export.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export error:", err);
+    alert("Failed to export tickets");
+  }
+});
+
+
+ 
+
+// } else {
+//   // 🟡 NON-ADMIN LOGIC: keep your existing dropdown setup
+//   // Use your current global dropdown functions
+//   console.log("Non-admin role detected — loading default dropdowns");
+
+//   // Call your existing global dropdown loading functions
+//   loadUserDropdownsDetails();  // loads users
+//   loadStreamsDropdown();       // loads all streams (non-project)
+//   loadSubjectsDropdown();      // loads all subjects (if exists)
+//   loadPrioritiesDropdown();    // loads all priorities
+//   loadStatusesDropdown();      // loads all statuses
+// }
+
+// });
+
+
+
+
+
+
+// addTicketButton.onclick = () => {
+//   editingIndex = -1;
+//   ticketForm.reset();
+//   document.getElementById("deleteTicketButton").style.display = "none";
+//   customSubject.style.display = 'none';
+// === Open Client Modal on Add Ticket ===
+
+addTicketButton.onclick = async () => {
+  const role = sessionStorage.getItem("role")?.toUpperCase();
+
+  if (role === "SAAIT") {
+    // ✅ Show client selection modal for SAAIT users
+    selectClientModal.style.display = "block";
+
+    try {
+      const res = await fetch("/get_clients");
+      const data = await res.json();
+
+      selectClientDropdown.innerHTML = '<option value="">Select Client</option>';
+      data.forEach(client => {
+        const opt = document.createElement("option");
+        opt.value = client.ClientID;
+        opt.textContent = client.ClientName;
+        selectClientDropdown.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("❌ Error fetching clients:", err);
+    }
+
+    // ✅ Cancel button closes client modal
+    const closeClientModalBtn = document.getElementById("closeClientModal");
+    if (closeClientModalBtn) {
+      closeClientModalBtn.onclick = () => {
+        selectClientModal.style.display = "none";
+      };
+    }
+
+    // ✅ When client selected → fetch next ticket no from backend
+    selectClientDropdown.onchange = async () => {
+      const clientId = selectClientDropdown.value;
+      if (!clientId) return;
+
+      try {
+        const res = await fetch("/get_next_ticket_no");
+        const data = await res.json();
+
+        if (data && data.next_ticket_no) {
+          modalTicketNo.value = data.next_ticket_no;
+        } else {
+          const clientName =
+            selectClientDropdown.options[selectClientDropdown.selectedIndex].textContent
+              .trim()
+              .toUpperCase()
+              .slice(0, 4);
+          modalTicketNo.value = `${clientName}0001`;
+        }
+      } catch (err) {
+        console.error("❌ Failed to fetch next ticket number:", err);
+        const clientName =
+          selectClientDropdown.options[selectClientDropdown.selectedIndex].textContent
+            .trim()
+            .toUpperCase()
+            .slice(0, 4);
+        modalTicketNo.value = `${clientName}0001`;
+      }
+
+      // Close modal and open add ticket form
+      selectClientModal.style.display = "none";
+      ticketModal.style.display = "flex";
+    };
+
+  } else {
+    // ✅ Non-SAAIT (logged-in client) flow
+    ticketForm.reset();
+    document.getElementById("deleteTicketButton").style.display = "none";
+
+    try {
+      // 🔹 Get the next ticket number from backend
+      const res = await fetch("/get_next_ticket_no");
+      const data = await res.json();
+
+      if (data && data.next_ticket_no) {
+        modalTicketNo.value = data.next_ticket_no;
+      } else {
+        const fallbackRole = (sessionStorage.getItem("role") || "CLNT").toUpperCase();
+        modalTicketNo.value = `${fallbackRole}0001`;
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch next ticket number:", err);
+      const fallbackRole = (sessionStorage.getItem("role") || "CLNT").toUpperCase();
+      modalTicketNo.value = `${fallbackRole}0001`;
+    }
+
+    // ✅ Finally, open the Add Ticket modal
+    ticketModal.style.display = "flex";
+  }
+};
+
+
+ 
+ 
+ 
+  
+
+
+
+    modalAssignedTo.value = '';
+  modalClosedDate.value = '';
+  modalClosedDate.disabled = true;
+  modalDateLogged.valueAsDate = new Date();
+
+  // ✅ Ensure role is pulled from sessionStorage
+  const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+  if (role === "SAH") {
+    modalStatus.value = 'In Progress';
+  } else {
+    modalStatus.value = 'Open';
+  }
+
+  modalPriority.value = '';
+
+
+  modalStream.innerHTML = '<option value="">Loading...</option>';
+
+ if (role === "SAH") {
+  // Saait.html — inside openAddModal(), SAH branch
+document.getElementById('modalStreamLabel').innerText = 'Project';
+
+// Load Projects
+fetch('/get_projects')
+  .then(res => res.json())
+  .then(projects => {
+    const modalStream = document.getElementById('modalStream');
+    modalStream.innerHTML = '<option value="">Select Project</option>';
+    projects.forEach(project => {
+      const opt = document.createElement('option');
+      opt.value = project.ProjectID;        // send ProjectID to backend
+      opt.textContent = project.ProjectName;
+      modalStream.appendChild(opt);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to load projects', err);
+    document.getElementById('modalStream').innerHTML =
+      '<option value="">Failed to load projects</option>';
+  });
+
+// On project change, populate users
+// Saait.html — inside the SAH project change listener
+// Saait.html — project -> users (no "Other")
+// --- ✅ FIXED: Prevent duplicate user list issue ---
+const projectDropdown = document.getElementById('modalStream');
+projectDropdown.onchange = async function () {
+  const projectId = this.value;
+  const raisedBy = document.getElementById('modalRaisedBy');
+  const assignedTo = document.getElementById('modalAssignedTo');
+  const modalSubject = document.getElementById('modalSubject');
+  const modalStatus = document.getElementById('modalStatus');
+  const modalPriority = document.getElementById('modalPriority');
+
+  // Clear all dependent dropdowns
+  raisedBy.innerHTML = '<option value="">Select User</option>';
+  assignedTo.innerHTML = '<option value="">Select Assignee</option>';
+  modalSubject.innerHTML = '<option value="">Select Subject</option>';
+  modalStatus.innerHTML = '<option value="">Select Status</option>';
+  modalPriority.innerHTML = '<option value="">Select Priority</option>';
+
+  if (!projectId) return;
+
+  try {
+    // 1️⃣ Fetch Users
+    const resUsers = await fetch(`/getprojectusers?projectid=${encodeURIComponent(projectId)}`);
+    const users = await resUsers.json();
+
+    if (Array.isArray(users)) {
+      users.forEach(u => {
+        const opt1 = document.createElement('option');
+        opt1.value = String(u.userid);
+        opt1.textContent = u.username;
+        raisedBy.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = String(u.userid);
+        opt2.textContent = u.username;
+        assignedTo.appendChild(opt2);
+      });
+    }
+
+    // 2️⃣ Fetch Subjects
+    const resSubjects = await fetch(`getsubjects?projectid=${encodeURIComponent(projectId)}`);
+    const subjects = await resSubjects.json();
+    if (Array.isArray(subjects)) {
+      subjects.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name;
+        modalSubject.appendChild(opt);
+      });
+    }
+
+    // 3️⃣ Fetch Statuses
+    const resStatuses = await fetch(`getstatuses?projectid=${encodeURIComponent(projectId)}`);
+    const statuses = await resStatuses.json();
+    if (Array.isArray(statuses)) {
+      statuses.forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st.name;
+        opt.textContent = st.name;
+        modalStatus.appendChild(opt);
+      });
+    }
+
+    // 4️⃣ Fetch Priorities
+    const resPriorities = await fetch(`getpriorities?projectid=${encodeURIComponent(projectId)}`);
+    const priorities = await resPriorities.json();
+    if (Array.isArray(priorities)) {
+      priorities.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        modalPriority.appendChild(opt);
+      });
+    }
+
+  } catch (e) {
+    console.error('❌ Failed to load dependent dropdowns for project', e);
+  }
+};
+
+
+
+
+
+// Hide Stream 2 fields for SAH
+document.getElementById('modalDashboardLabel').style.display = 'none';
+document.getElementById('modalDashboard').style.display = 'none';
+document.getElementById('customDashboard').style.display = 'none';
+
+
+} else if (role === "TLC") {
+  document.getElementById('modalStreamLabel').innerText = 'Stream';
+
+  // Label change
+  document.getElementById('modalDashboardLabel').style.display = '';
+  document.getElementById('modalDashboardLabel').innerText = 'Report Name';
+
+  // Hide dropdown completely and remove its name to avoid duplicate
+  const modalDashboard = document.getElementById('modalDashboard');
+  modalDashboard.style.display = 'none';
+  modalDashboard.removeAttribute('name');   // ✅ prevents double "dashboard"
+
+  // Show input and give it the correct name
+  const customDashboard = document.getElementById('customDashboard');
+  customDashboard.style.display = '';
+  customDashboard.setAttribute('name', 'dashboard');  // ✅ only one active field
+
+  
+
+  // Load main Stream list
+  populateStreams();
+}
+ else {
+  // ARM or SAAIT
+  document.getElementById('modalStreamLabel').innerText = 'Stream';
+  document.getElementById('modalDashboardLabel').style.display = '';
+  document.getElementById('modalDashboardLabel').innerText = 'Stream 2';
+  document.getElementById('modalDashboard').style.display = '';
+  document.getElementById('customDashboard').style.display = 'none';
+
+  modalDashboard.innerHTML = '<option value="">Select Stream 2</option>';
+  populateStreams();
+}
+
+ticketModal.style.display = "flex";
+// };
+
+// function populateStatusFilter() {
+//   const statusFilter = document.getElementById('statusFilter');
+//   if (!statusFilter) return;
+
+//   // Save current value to preserve selection after reload
+//   const currentValue = statusFilter.value || "";
+
+//   // Remove all options except "All"
+//   while (statusFilter.options.length > 1) {
+//     statusFilter.remove(1);
+//   }
+
+//   const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+//   let statuses = [];
+//   if (role === "TLC") {
+//     statuses = [
+//       "Open",
+//       "In Progress",
+//       "On Hold",
+//       "Closed"
+//     ];
+//   } else if (role === "SAH") {
+//     statuses = [
+//       "On Hold",
+//       "In Progress",
+//       "Closed"
+//     ];
+//   } else {
+//     // ARM, SAAIT and others get all statuses
+//     statuses = [
+//       "Open",
+//       "In Progress",
+//       "On Hold (ARM Team)",
+//       "On Hold (SAAIT TEAM)",
+//       "Closed",
+//       "On Demand(ARM Team)",
+//       "On Demand (SAAIT TEAM)"
+//     ];
+//   }
+
+//   statuses.forEach(text => {
+//     const opt = document.createElement("option");
+//     opt.value = text;
+//     opt.textContent = text;
+//     statusFilter.appendChild(opt);
+//   });
+
+//   // Restore selection if needed
+//   statusFilter.value = currentValue;
+// }
+
+// // Run this after your page and sessionStorage role setup is done
+// populateStatusFilter();
+
+
+async function populateStreams() {
+  try {
+    console.log("Fetching /get_dropdown_data...");
+    const res = await fetch("/get_dropdown_data");
+    if (!res.ok) throw new Error(`Network response was not ok: ${res.statusText}`);
+
+    const data = await res.json();
+    console.log("Dropdown data received:", data);
+
+    if (!Array.isArray(data.streams)) {
+      throw new Error("Streams data missing or invalid");
+    }
+
+    const modalStream = document.getElementById("modalStream");
+    modalStream.innerHTML = '<option value="">Select Stream</option>';
+
+    const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+    let streams = data.streams.map(s => s.name || s);
+
+    if (role === "TLC") {
+      streams = streams.filter(s => ["Finance", "HCM", "SCM"].includes(s));
+    }
+
+    streams.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      modalStream.appendChild(opt);
+    });
+
+    if (Array.isArray(data.dashboards)) {
+      window.streamMappings = data.dashboards;
+    } else {
+      window.streamMappings = [];
+      console.warn("Dashboards missing or invalid");
+    }
+  } catch (err) {
+    console.error("❌ Failed to load streams:", err);
+    const modalStream = document.getElementById("modalStream");
+    if (modalStream) {
+      modalStream.innerHTML = '<option value="">Failed to load streams</option>';
+    }
+  }
+}
+
+populateStreams()
+  .then(() => {
+    const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+    if (role === "TLC") {
+      // 🔹 Dashboard handling for TLC
+      modalDashboard.style.display = "none";
+      modalDashboard.required = false;
+      modalDashboard.removeAttribute("name");
+
+      customDashboard.style.display = "block";
+      customDashboard.required = true;
+      customDashboard.setAttribute("name", "dashboard");
+      customDashboard.placeholder = "Enter Report Name";
+
+      document.getElementById("modalDashboardLabel").style.display = "block";
+      document.getElementById("modalDashboardLabel").innerText = "Report Name";
+
+      // 🔹 Restrict Subjects for TLC
+      modalSubject.innerHTML = `
+        <option value="">Select Subject</option>
+        <option value="New Report Requirement">New Report Requirement</option>
+        <option value="Migrate to New Environment">Migrate to New Environment</option>
+        <option value="Modification">Modification</option>
+        <option value="Other">Other</option>
+      `;
+
+      // 🔹 Restrict Status for TLC
+      modalStatus.innerHTML = `
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="On Hold">On Hold</option>
+        <option value="Closed">Closed</option>
+      `;
+    } else {
+      // ARM/SAAIT Dashboard handling
+      modalDashboard.style.display = "";
+      customDashboard.style.display = "none";
+      customDashboard.required = false;
+      document.getElementById("modalDashboardLabel").innerText = "Stream 2";
+
+      // ✅ ARM/SAAIT Subjects (full list)
+      modalSubject.innerHTML = `
+        <option value="">Select Subject</option>
+        <option value="Data mismatch">Data mismatch</option>  
+        <option value="Dashboard Access">Dashboard Access</option>  
+        <option value="Data Refresh">Data Refresh</option> 
+        <option value="Dashboard completely down">Dashboard completely down</option>
+        <option value="data breach">data breach</option>
+        <option value="Impact on CXO">Impact on CXO</option>
+        <option value="Visual issues">Visual issues</option>
+        <option value="incorrect data">incorrect data</option>
+        <option value="Enhancement requests">Enhancement requests</option>
+        <option value="UI tweaks">UI tweaks</option>
+        <option value="training queries">training queries</option>
+        <option value="Technical support">Technical support</option>
+        <option value="New dashboard Request">New dashboard Request</option>
+        <option value="Other">Other</option>
+      `;
+
+      // Restrict Status for SAH to 3 options, else full status list
+      if (role === "SAH") {
+        modalStatus.innerHTML = `
+          <option value="On Hold">On Hold</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Closed">Closed</option>
+        `;
+      } else {
+        modalStatus.innerHTML = `
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="On Hold ARM Team">On Hold ARM Team</option>
+          <option value="On Hold SAAIT Team">On Hold SAAIT Team</option>
+          <option value="On Demand ARM Team">On Demand ARM Team</option>
+          <option value="On Demand SAAIT Team">On Demand SAAIT Team</option>
+          <option value="Closed">Closed</option>
+        `;
+      }
+    }
+
+    
+    ticketModal.style.display = 'none';
+  });
+
+// Additional dropdown and input handlers with role awareness
+modalRaisedBy.onchange = () => {
+  if (modalRaisedBy.value === 'Other') {
+    customRaisedBy.style.display = 'block';
+    customRaisedBy.required = true;
+  } else {
+    customRaisedBy.style.display = 'none';
+    customRaisedBy.required = false;
+    customRaisedBy.value = '';
+  }
+};
+
+modalAssignedTo.onchange = () => {
+  if (modalAssignedTo.value === 'Other') {
+    customAssignedTo.style.display = 'block';
+    customAssignedTo.required = true;
+  } else {
+    customAssignedTo.style.display = 'none';
+    customAssignedTo.required = false;
+    customAssignedTo.value = '';
+  }
+};
+
+modalSubject.onchange = () => {
+  if (modalSubject.value === 'Other') {
+    customSubject.style.display = 'block';
+    customSubject.required = true;
+  } else {
+    customSubject.style.display = 'none';
+    customSubject.required = false;
+    customSubject.value = '';
+  }
+};
+
+modalStream.onchange = () => {
+  const selectedStream = modalStream.value;
+  const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+  if (selectedStream === "Other") {
+    customStream.style.display = "block";
+    customStream.required = true;
+  } else {
+    customStream.style.display = "none";
+    customStream.required = false;
+  }
+
+  if (role === "TLC") {
+    // Always show Report Name input regardless of stream selection
+    modalDashboard.style.display = "none";
+    modalDashboard.required = false;
+    modalDashboard.removeAttribute("name");
+
+    customDashboard.style.display = "block";
+    customDashboard.required = true;
+    customDashboard.setAttribute("name", "dashboard");
+
+    document.getElementById("modalDashboardLabel").innerText = "Report Name";
+
+  } else if (role === "SAH") {
+    modalDashboard.style.display = "none";
+    modalDashboard.required = false;
+    modalDashboard.removeAttribute("name");
+
+    customDashboard.style.display = "none";
+    customDashboard.required = false;
+    customDashboard.removeAttribute("name");
+
+  } else {
+    modalDashboard.style.display = "block";
+    modalDashboard.required = true;
+    modalDashboard.setAttribute("name", "dashboard");
+
+    customDashboard.style.display = "none";
+    customDashboard.required = false;
+    customDashboard.removeAttribute("name");
+
+    document.getElementById("modalDashboardLabel").innerText = "Stream 2";
+  }
+};
+
+modalDashboard.onchange = () => {
+  if (modalDashboard.value === 'Other') {
+    customDashboard.style.display = 'block';
+    customDashboard.required = true;
+  } else {
+    customDashboard.style.display = 'none';
+    customDashboard.required = false;
+  }
+};
+
+// async function populateStreamFilter() {
+//   try {
+//     const res = await fetch("/get_dropdown_data");
+//     const data = await res.json();
+
+//     const streamFilter = document.getElementById("streamFilter");
+//     if (!streamFilter) return;
+
+//     // ✅ Empty-string option = show everything
+//     streamFilter.innerHTML = '<option value="">All</option>';
+
+//     // ✅ Read role from session
+//     const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+//     // Filter streams based on role
+//     let allowedStreams = data.streams;
+
+//     if (role === "TLC") {
+//       // TLC only sees HCM, SCM, Finance
+//       allowedStreams = data.streams.filter(s =>
+//         ["HCM", "SCM", "FINANCE"].includes(s.name.toUpperCase())
+//       );
+//     }
+
+//     // ✅ Add filtered streams
+//     allowedStreams.forEach(s => {
+//       const opt = document.createElement("option");
+//       opt.value = s.name;
+
+//       // 👇 rename only the "All" stream for frontend display
+//       if (s.name.toUpperCase() === "ALL") {
+//         opt.textContent = "For All";   // label change only
+//       } else {
+//         opt.textContent = s.name;
+//       }
+
+//       streamFilter.appendChild(opt);
+//     });
+
+//     console.log("✅ Stream filter populated for role:", role, allowedStreams);
+//   } catch (err) {
+//     console.error("❌ Failed to load stream filter:", err);
+//   }
+// }
+
+ 
+window.addEventListener("load", () => {
+  fetch("/get_user_info")
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.role) {
+        role = data.role.trim().toUpperCase();  // Normalize
+        const username = data.username;
+ 
+        console.log("✅ Logged-in user:", username);
+        console.log("🎯 Role (project scope):", role);
+ 
+        // Store in sessionStorage
+        sessionStorage.setItem("role", role);
+        sessionStorage.setItem("name", username);
+ 
+        
+ 
+        // Now load tickets
+        loadTicketsFromBackend();
+      } else {
+        console.warn("❗ No role found in /get_user_info");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Failed to fetch user info:", err);
+    });
+    populateStreamFilter();
+
+});
+
+
+
+
+ticketForm.onsubmit = async e => {
+  e.preventDefault();
+  const role = (sessionStorage.getItem("role") || "").toUpperCase();
+
+  if (role === "VIEWER") {
+    alert("You are not allowed to submit tickets.");
+    return;
+  }
+
+  // Validation
+  if (!modalDateLogged.value) return alert("Please select Date Logged.");
+  if (!modalPriority.value) return alert("Please select Priority.");
+  if (!modalStatus.value) return alert("Please select Status.");
+
+  let projectId = modalProject.value || ""; // project dropdown value = ID
+  let clientId = sessionStorage.getItem("client_id") || ""; // fetched from login
+
+  if (role === "SAH" && !projectId) return alert("Please select a project.");
+
+  // STREAM / PROJECT
+  let streamVal = "";
+  if (role === "SAH") {
+    streamVal = modalStream.options[modalStream.selectedIndex]?.textContent?.trim() || "";
+  } else {
+    streamVal = modalStream.value === "Other" ? (customStream.value || "").trim() : modalStream.value;
+  }
+
+  // SUBJECT
+  const subjectId = modalSubject.value; // ID
+  if (!subjectId) return alert("Please select a subject.");
+
+  // DASHBOARD / STREAM2
+  let dashboardVal = "";
+  if (role === "TLC") {
+    const reportInputEl = document.getElementById("modalReportInput");
+    dashboardVal = reportInputEl && reportInputEl.style.display !== "none"
+      ? reportInputEl.value.trim()
+      : (customDashboard.value || "").trim();
+  } else if (role !== "SAH") {
+    dashboardVal = modalDashboard.value === "Other"
+      ? (customDashboard.value || "").trim()
+      : modalDashboard.value;
+
+    // ✅ Require Stream 2 selection (except TLC/SAH roles)
+    if (!dashboardVal || dashboardVal.trim() === "") {
+      alert("Please select Stream 2 before submitting the ticket.");
+      modalDashboard.focus();
+      return;
+    }
+  }
+
+  // Raised By / Assigned To
+  const raisedByVal = modalRaisedBy.value;
+  const assignedToVal = modalAssignedTo.value;
+  if (!raisedByVal || !assignedToVal)
+    return alert("Please select Raised By and Assigned To.");
+
+  const formData = new FormData();
+
+formData.append("subject_id", subjectId);
+
+formData.append("priority_id", modalPriority.value);
+
+formData.append("status_id", modalStatus.value);
+
+formData.append("project_id", projectId);
+
+formData.append("client_id", clientId);
+ 
+formData.append("stream", streamVal);
+
+formData.append("Stream2", dashboardVal);
+
+formData.append("date_logged", modalDateLogged.value);
+ 
+// ✅ Closed Date logic improved
+
+const selectedStatusText =
+
+  modalStatus.options[modalStatus.selectedIndex]?.textContent?.trim().toLowerCase() || "";
+
+if (selectedStatusText === "closed") {
+
+  // If no date selected, set today's date automatically
+
+  let closedDateVal = modalClosedDate.value;
+
+  if (!closedDateVal) {
+
+    const today = new Date();
+
+    const yyyy = today.getFullYear();
+
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+
+    const dd = String(today.getDate()).padStart(2, "0");
+
+    closedDateVal = `${yyyy}-${mm}-${dd}`;
+
+  }
+
+  formData.append("closed_date", closedDateVal);
+
+} else {
+
+  formData.append("closed_date", "");
+
+}
+ 
+formData.append("description", (modalDescription.value || "").trim());
+
+formData.append("comment", (modalComments.value || "").trim());
+
+formData.append("raisedby", raisedByVal);
+
+formData.append("assignedto", assignedToVal);
+ 
+if (modalAttachment.files.length > 0) {
+
+  formData.append("attachment", modalAttachment.files[0]);
+
+}
+ 
+const isEditing = editingIndex !== -1;
+
+const endpoint = isEditing ? "/update_ticket" : "/add_ticket";
+
+if (isEditing) {
+
+  formData.append("id", tickets[editingIndex].id);
+
+  formData.append("ticket_no", document.getElementById("modalTicketNo").value);
+
+}
+
+ 
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: { Role: role },
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.message) {
+        alert(data.message + (data.ticket_no ? " Ticket No: " + data.ticket_no : ""));
+        ticketModal.style.display = "none";
+        loadTicketsFromBackend();
+      } else {
+        alert("Error: " + (data.error || "Unknown error"));
+      }
+    })
+    .catch(err => {
+      console.error("❌ Error submitting ticket:", err);
+      alert("Failed to submit ticket.");
+    });
+};
+
+
+
+function populateStreams(selectedStream = '', selectedDashboard = '', selectedSubject = '', selectedStatus = '') {
+  const role = (sessionStorage.getItem("role") || "").toUpperCase();
+  const dashboardLabel = document.getElementById("modalDashboardLabel");
+
+  // TLC special case
+  if (role === "TLC") {
+    if (dashboardLabel) dashboardLabel.textContent = "Reports Name";
+
+    modalDashboard.style.display = "none";
+  modalDashboard.disabled = true;
+  modalDashboard.required = false;
+  modalDashboard.removeAttribute("name"); // ✅ ensure dropdown not submitted
+
+
+    // Create or reuse a text input for Reports Name
+   // Reuse the existing input instead of creating a new one
+  const customDashboard = document.getElementById("customDashboard");
+  if (customDashboard) {
+    customDashboard.style.display = "block";
+    customDashboard.setAttribute("name", "dashboard");  // ✅ ensure correct name
+    customDashboard.required = true;
+    customDashboard.value = selectedDashboard || "";
+  }
+    // Stream: Finance, SCM, HCM
+    modalStream.innerHTML = `
+      <option value="">Select Stream</option>
+      <option value="Finance">Finance</option>
+      <option value="SCM">SCM</option>
+      <option value="HCM">HCM</option>
+    `;
+    if (selectedStream) modalStream.value = selectedStream;
+
+    // Subject options
+    modalSubject.innerHTML = `
+      <option value="">Select Subject</option>
+      <option value="New Report Requirement">New Report Requirement</option>
+      <option value="Migrate to New Environment">Migrate to New Environment</option>  
+      <option value="Modification">Modification</option>
+      <option value="Other">Other</option>
+    `;
+    if (selectedSubject) modalSubject.value = selectedSubject;
+
+    // Status options
+    modalStatus.innerHTML = `
+      <option value="">Select Status</option>
+      <option value="Open">Open</option>
+      <option value="In Progress">In Progress</option>
+      <option value="On Hold">On Hold</option>
+      <option value="Closed">Closed</option>
+    `;
+    modalStatus.value = selectedStatus || 'Open';
+
+    // Hide custom input boxes for TLC
+    customStream.style.display = 'none';
+    customStream.required = false;
+    customSubject.style.display = 'none';
+    customSubject.required = false;
+    
+
+    return Promise.resolve();
+  }
+
+  // ARM / SAAIT original behavior (without "Other")
+return fetch('/get_dropdown_data')
+  .then(res => res.json())
+  .then(data => {
+    modalStream.innerHTML = '<option value="">Select Stream</option>';
+
+    // Populate streams from DB
+    data.streams.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.name;
+      opt.textContent = s.name;
+      if (s.name === selectedStream) opt.selected = true;
+      modalStream.appendChild(opt);
+    });
+
+    // Stream change handler
+    modalStream.onchange = () => {
+      modalDashboard.innerHTML = '<option value="">Select Stream 2</option>';
+
+      // Always keep custom fields hidden (since no "Other")
+      customStream.style.display = 'none';
+      customStream.required = false;
+      customDashboard.style.display = 'none';
+      customDashboard.required = false;
+
+      // Populate dashboards filtered by stream
+      data.dashboards
+        .filter(d => d.stream === modalStream.value)
+        .forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.name;
+          opt.textContent = d.name;
+          if (d.name === selectedDashboard) opt.selected = true;
+          modalDashboard.appendChild(opt);
+        });
+    };
+
+    // Ensure onchange fires if stream was preselected
+    if (selectedStream) {
+      modalStream.dispatchEvent(new Event('change'));
+    }
+  })
+  .catch(err => {
+    console.error('Error loading streams/dashboards:', err);
+    throw err;
+  });
+
+}
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+  // === CLIENT ELEMENTS ===
+  const clientBtn = document.getElementById("clientBtn");
+  const clientDropdown = document.getElementById("clientDropdown");
+  const createClient = document.getElementById("createClient");
+  const viewClient = document.getElementById("viewClient");
+  const createClientModal = document.getElementById("createClientModal");
+  const closeModal = document.getElementById("closeModal");
+  const cancelModal = document.getElementById("cancelModal");
+  const createClientForm = document.getElementById("createClientForm");
+
+  // === PROJECT ELEMENTS ===
+  const projectBtn = document.getElementById("projectBtn");
+  const projectDropdown = document.getElementById("projectDropdown");
+  const createProject = document.getElementById("createProject");
+  const projectModal = document.getElementById("projectModal");
+  const closeProjectModal = document.getElementById("closeProjectModal");
+  const cancelProjectModal = document.getElementById("cancelProjectModal");
+  const projectForm = document.getElementById("projectForm");
+
+  // =====================================================
+  // ✅ CLIENT DROPDOWN + CREATE/VIEW CLIENT HANDLERS
+  // =====================================================
+
+  // Toggle Client dropdown
+ clientBtn.addEventListener("click", function (e) {
+  e.preventDefault();
+  window.location.href = "/view_clients";
+});
+ 
+
+  // Close dropdown when clicking outside
+  window.addEventListener("click", function () {
+    clientDropdown.classList.remove("show");
+  });
+
+  // ✅ Open Create Client Modal
+  createClient.addEventListener("click", function (e) {
+    e.preventDefault();
+    clientDropdown.classList.remove("show");
+    createClientModal.style.display = "flex";
+
+    // Fetch next ClientID
+    fetch("/get_next_client_id")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("ClientID").value = data.next_id || "";
+      })
+      .catch(err => console.error("Error fetching next ClientID:", err));
+  });
+
+  // ✅ Close Client Modal
+  closeModal.addEventListener("click", () => (createClientModal.style.display = "none"));
+  cancelModal.addEventListener("click", () => (createClientModal.style.display = "none"));
+
+  // ✅ Close modal when clicking outside
+  window.addEventListener("click", function (event) {
+    if (event.target === createClientModal) {
+      createClientModal.style.display = "none";
+    }
+  });
+
+ 
+ 
+  // ✅ Open Create Project Modal
+  if (createProject && projectModal) {
+    createProject.addEventListener("click", async function (e) {
+      e.preventDefault();
+      projectModal.style.display = "flex";
+      await loadClientsForProjects();
+      fetchNextProjectID();
+    });
+  }
+
+  // ✅ Close Project Modal
+  if (closeProjectModal) closeProjectModal.addEventListener("click", () => (projectModal.style.display = "none"));
+  if (cancelProjectModal) cancelProjectModal.addEventListener("click", () => (projectModal.style.display = "none"));
+
+  // ✅ Close Project Modal when clicking outside
+  window.addEventListener("click", function (event) {
+    if (event.target === projectModal) {
+      projectModal.style.display = "none";
+    }
+  });
+
+  // ✅ Submit Project Form
+  if (projectForm) {
+    projectForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch("/add_project", {
+          method: "POST",
+          body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          alert(result.message);
+          projectModal.style.display = "none";
+          projectForm.reset();
+          fetchNextProjectID();
+        } else {
+          alert("Error: " + result.message);
+        }
+      } catch (error) {
+        console.error("Error submitting project form:", error);
+        alert("Something went wrong!");
+      }
+    });
+  }
+
+  // =====================================================
+  // ✅ Helper Functions
+  // =====================================================
+
+  async function loadClientsForProjects() {
+    const response = await fetch("/get_clients");
+    const clients = await response.json();
+    const dropdown = document.getElementById("clientID");
+    dropdown.innerHTML = "";
+
+    if (clients.length === 0) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No active clients found";
+      dropdown.appendChild(option);
+      return;
+    }
+
+    clients.forEach(client => {
+      const option = document.createElement("option");
+      option.value = client.ClientID;
+      option.textContent = `${client.ClientID} - ${client.ClientName}`;
+      dropdown.appendChild(option);
+    });
+  }
+
+  async function fetchNextProjectID() {
+    try {
+      const res = await fetch("/get_next_project_id");
+      const data = await res.json();
+      document.getElementById("ProjectID").value = data.next_id || "Error";
+    } catch (error) {
+      console.error("Error fetching next Project ID:", error);
+      document.getElementById("ProjectID").value = "Error";
+    }
+  }
+});
+ 
+function formatForInputDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toISOString().split('T')[0];
+}
+// OPEN EDIT MODAL
+
+// ✅ New function replaces the old openEditModal
+function openViewPage(idx) {
+  const ticket = tickets[idx];
+  if (!ticket || !ticket.id) {
+    console.error("❌ Ticket not found for index:", idx, ticket);
+    return;
+  }
+  // Redirect to the new detailed view page
+  window.location.href = `/ticket/${ticket.id}`;
+}
+
+ 
+function openAddModal() {
+  editingIndex = null;
+  ticketForm.reset();
+
+  // Hide custom fields initially
+  customSubject.style.display = 'none';
+  customStream.style.display = 'none';
+  customDashboard.style.display = 'none';
+  customRaisedBy.style.display = 'none';
+  customAssignedTo.style.display = 'none';
+
+  // Reset streams/dashboards dropdowns
+  populateStreams();
+
+  // TICKET NO
+  modalTicketNo.value = "";
+ 
+
+  // DATE LOGGED (enabled in add mode)
+  modalDateLogged.value = "";
+  modalDateLogged.disabled = false;
+  modalDateLogged.removeAttribute("required");
+
+  // CLOSED DATE (disabled by default)
+  modalClosedDate.disabled = true;
+  modalClosedDate.value = '';
+  modalClosedDate.removeAttribute('max');
+
+  // Reset other fields
+  modalPriority.value = "";
+  modalStatus.value = "";
+  modalDescription.value = "";
+  document.getElementById('modalComments').value = "";
+  modalAttachment.value = "";
+
+  const role = sessionStorage.getItem('role')?.toUpperCase();
+
+  if (role === 'SAH') {
+    const modalStream = document.getElementById('modalStream');
+    document.getElementById('modalStreamLabel').innerText = 'Project';
+
+    // Load projects into modalStream dropdown
+    fetch('/get_projects_by_client')
+      .then(response => response.json())
+      .then(projects => {
+        modalStream.innerHTML = '<option value="">Select Project</option>';
+        projects.forEach(project => {
+          const option = document.createElement('option');
+          option.value = project.ProjectID || project.name; // Prefer ProjectID if available
+          option.textContent = project.ProjectName || project.name;
+          modalStream.appendChild(option);
+        });
+      });
+
+    modalStream.addEventListener('change', async function () {
+    const selectedProject = this.value;
+    const raisedBySelect = document.getElementById('modalRaisedBy');
+    const assignedToSelect = document.getElementById('modalAssignedTo');
+    const modalSubject = document.getElementById('modalSubject');
+
+    // Reset user dropdowns
+    raisedBySelect.innerHTML = '<option value="">Select User</option>';
+    assignedToSelect.innerHTML = '<option value="">Select Assignee</option>';
+
+    // Reset subject dropdown
+    modalSubject.innerHTML = '<option value="">Select Subject</option>';
+
+    if (!selectedProject) return; // Exit if no project selected
+
+    try {
+        // Fetch users related to the selected project
+        const resUsers = await fetch(`getprojectusers?projectid=${encodeURIComponent(selectedProject)}`);
+        const users = await resUsers.json();
+
+        if (Array.isArray(users)) {
+            users.forEach(user => {
+                const optRaisedBy = document.createElement('option');
+                optRaisedBy.value = user.user_id;
+                optRaisedBy.textContent = user.user_name;
+                raisedBySelect.appendChild(optRaisedBy);
+
+                const optAssignedTo = document.createElement('option');
+                optAssignedTo.value = user.user_id;
+                optAssignedTo.textContent = user.user_name;
+                assignedToSelect.appendChild(optAssignedTo);
+            });
+        }
+
+        // Fetch subjects related to the selected project
+        const resSubjects = await fetch(`getsubjects?projectid=${encodeURIComponent(selectedProject)}`);
+        const subjects = await resSubjects.json();
+
+        if (Array.isArray(subjects)) {
+            subjects.forEach(subject => {
+                const optSubject = document.createElement('option');
+                optSubject.value = subject.name;  // Adjust if your backend returns different format
+                optSubject.textContent = subject.name;
+                modalSubject.appendChild(optSubject);
+            });
+        }
+
+    } catch (err) {
+        console.error('Error loading users or subjects for the selected project:', err);
+    }
+});
+
+
+
+
+
+
+    // Hide Stream 2 and Report Name inputs
+    document.getElementById('modalDashboardLabel').style.display = 'none';
+    document.getElementById('modalDashboard').style.display = 'none';
+    document.getElementById('customDashboard').style.display = 'none';
+
+  } else if (role === 'TLC') {
+    document.getElementById('modalStreamLabel').innerText = 'Stream';
+
+    // Hide Stream 2 dropdown, remove its name
+    document.getElementById('modalDashboard').style.display = 'none';
+    document.getElementById('modalDashboard').removeAttribute('name');
+    document.getElementById('modalDashboard').required = false;
+
+    // Show Report Name input, set required, name and placeholder
+    document.getElementById('customDashboard').style.display = 'block';
+    document.getElementById('customDashboard').required = true;
+    document.getElementById('customDashboard').setAttribute('name', 'dashboard');
+    document.getElementById('customDashboard').placeholder = "Enter Report Name";
+
+    // Show label and update its text
+    document.getElementById('modalDashboardLabel').style.display = 'block';
+    document.getElementById('modalDashboardLabel').innerText = "Report Name";
+
+  } else {
+    // Default behavior for other roles: show Stream 2 dropdown and label
+    document.getElementById('modalStreamLabel').innerText = 'Stream';
+    document.getElementById('modalDashboardLabel').style.display = 'block';
+    document.getElementById('modalDashboardLabel').innerText = 'Stream 2';
+    document.getElementById('modalDashboard').style.display = 'block';
+    document.getElementById('modalDashboard').setAttribute('name', 'dashboard');
+    document.getElementById('modalDashboard').required = true;
+    document.getElementById('customDashboard').style.display = 'none';
+    document.getElementById('customDashboard').required = false;
+    document.getElementById('customDashboard').removeAttribute('name');
+  }
+
+  // Show the modal
+  // After setting modalStream.value for an existing ticket in edit mode:
+if (sessionStorage.getItem('role')?.toUpperCase() === 'SAH' && typeof existingTicket !== 'undefined' && existingTicket) {
+  const modalStream = document.getElementById('modalStream');
+  // Ensure the ProjectID of the ticket is set on the dropdown
+  modalStream.value = existingTicket.streamProjectID; // backend should provide this numeric ID
+  // Trigger project change to load mapped users
+  modalStream.dispatchEvent(new Event('change'));
+
+  // After users load into the dropdowns, select the saved values
+  setTimeout(() => {
+    const raisedEl = document.getElementById('modalRaisedBy');
+    const assignEl = document.getElementById('modalAssignedTo');
+    if (raisedEl) raisedEl.value = existingTicket.raisedbyId;   // numeric user id
+    if (assignEl) assignEl.value = existingTicket.assignedtoId; // numeric user id
+  }, 300);
+}
+
+  ticketModal.style.display = "flex";
+  document.getElementById("deleteTicketButton").style.display = "none";
+
+  // Enable form elements and submit button
+  const formElements = document.querySelectorAll("#ticketForm input, #ticketForm select, #ticketForm textarea");
+  const submitButton = document.querySelector("#ticketForm button[type='submit']");
+  formElements.forEach(el => el.disabled = false);
+  submitButton.style.display = "inline-block";
+}
+
+// STALE CHECK (fixed field names + typo)
+function isStaleTicket(ticket) {
+  const holdStatuses = ["On Hold (ARM Team)", "On Hold (SAAIT Team)"]; // fix typo
+  if (!holdStatuses.includes(ticket.status)) return false;
+
+  const loggedDate = new Date(ticket.date_logged); // fix field name
+  const today = new Date();
+  const diffInDays = (today - loggedDate) / (1000 * 60 * 60 * 24);
+  return diffInDays > 7;
+}
+
+
+
+function renderTickets() {
+  console.log("🧩 Rendering tickets — raw count:", tickets.length);
+
+  // ✅ Step 1: Clear old rows before rendering
+  ticketTableBody.innerHTML = '';
+
+  // ✅ Step 2: Remove duplicates by ID or Ticket No
+  const seen = new Set();
+  const uniqueTickets = tickets.filter(t => {
+    const key = t.id || t.ticket_no;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  console.log(`✅ Unique tickets to render: ${uniqueTickets.length}`);
+
+  // Read filter values
+  const statusVal = statusFilter.value;
+  const streamVal = streamFilter.value;
+  const priorityVal = priorityFilter.value;
+  const selectedMonth = monthFilter.value;
+
+  // Get user role
+  const role = sessionStorage.getItem('role')?.toUpperCase();
+
+  // Update table headers based on role
+  const streamHeader = document.querySelector('.stream-header');
+  const dashboardHeader = document.getElementById('tableDashboardHeader');
+
+  if (role === 'SAH') {
+    if (streamHeader) {
+      streamHeader.textContent = 'Project';
+      streamHeader.classList.add('project-header');
+      streamHeader.classList.remove('stream-header');
+    }
+    if (dashboardHeader) {
+      dashboardHeader.style.display = 'none';
+    }
+  } else {
+    if (streamHeader && streamHeader.classList.contains('project-header')) {
+      streamHeader.textContent = 'Stream';
+      streamHeader.classList.remove('project-header');
+      streamHeader.classList.add('stream-header');
+    }
+    if (dashboardHeader) {
+      dashboardHeader.style.display = '';
+    }
+  }
+
+  // Normalize status helper
+  const currentRole = role || (sessionStorage.getItem("role") || "").toUpperCase();
+
+  function normalizeStatusForRole(status) {
+    if (!status) return "";
+    const s = status.toLowerCase().trim();
+    if (s.includes("on hold")) {
+      if (currentRole === "TLC") return "on-hold";
+      if (s.includes("arm")) return "on-hold-arm-team";
+      if (s.includes("saait")) return "on-hold-saait-team";
+      return "on-hold";
+    }
+    if (s.includes("on demand")) {
+      if (s.includes("arm")) return "on-demand-arm-team";
+      if (s.includes("saait")) return "on-demand-saait-team";
+      return "on-demand";
+    }
+    if (s.includes("in progress")) return "in-progress";
+    if (s.includes("open")) return "open";
+    if (s.includes("closed")) return "closed";
+    return s.replace(/\(|\)/g, ' ').replace(/\s+/g, '-').replace(/--+/g, '-').trim();
+  }
+
+  // Extract month helper
+  function extractMonth(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    return String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  // Ticket number numeric extraction
+  function ticketNumberValue(tn) {
+    if (!tn) return 0;
+    const digits = ("" + tn).replace(/\D/g, '');
+    return digits ? parseInt(digits, 10) : 0;
+  }
+
+  const statusOrder = (currentRole === "TLC" || currentRole === "SAH") ? {
+    'open': 1,
+    'in-progress': 2,
+    'on-hold': 3,
+    'closed': 4
+  } : {
+    'open': 1,
+    'in-progress': 2,
+    'on-hold-arm-team': 3,
+    'on-hold-saait-team': 3,
+    'closed': 4
+  };
+
+  // ✅ Step 3: Filter and sort tickets
+  uniqueTickets
+    .map((ticket, i) => ({ ticket, originalIndex: i }))
+    .filter(({ ticket }) => {
+      const norm = s => (s || '').toLowerCase().replace(/\(|\)/g, '').replace(/\s+/g, ' ').trim();
+      const matchStatus = !statusVal || norm(ticket.status) === norm(statusVal);
+      const matchStream = !streamVal || ticket.stream === streamVal;
+      const matchPriority = !priorityVal || ticket.priority === priorityVal;
+      const dateLoggedMonth = extractMonth(ticket.date_logged);
+      return matchStatus && matchStream && matchPriority && (!selectedMonth || dateLoggedMonth === selectedMonth);
+    })
+    .sort((a, b) => {
+      const aKey = normalizeStatusForRole(a.ticket.status);
+      const bKey = normalizeStatusForRole(b.ticket.status);
+      const orderA = statusOrder[aKey] || 99;
+      const orderB = statusOrder[bKey] || 99;
+      if (orderA !== orderB) return orderA - orderB;
+      const numA = ticketNumberValue(a.ticket.ticket_no);
+      const numB = ticketNumberValue(b.ticket.ticket_no);
+      return numB - numA;
+    })
+    .forEach(({ ticket, originalIndex }) => {
+      const row = document.createElement('tr');
+      const role = sessionStorage.getItem('role')?.toUpperCase();
+
+      row.innerHTML = `
+        <td class="ticket-no-cell">
+          ${ticket.ticket_no}<br>
+          <small class="priority-${ticket.priority.toLowerCase().replace(/ /g, '-')}">${ticket.priority}</small><br>
+          <small class="status-${ticket.status.toLowerCase().replace(/ /g, '-')}">${ticket.status}</small><br>
+          <button class="small-view-btn" onclick="openViewPage(${originalIndex})">View</button>
+        </td>
+        ${role === 'SAH'
+          ? `<td class="project-cell">${ticket.stream}</td>`
+          : `<td class="stream-cell">${ticket.stream}</td><td>${ticket.dashboard}</td>`
+        }
+        <td class="raised-by-cell">${ticket.raised_by_name || ticket.raised_by}</td>
+        <td>${ticket.assigned_to_name || ticket.assigned_to}</td>
+        <td class="subject-cell">${ticket.subject}</td>
+        <td>${formatDate(ticket.date_logged)}</td>
+        <td>${formatDate(ticket.closed_date)}</td>
+        <td>
+          <span class="badge ${ticket.priority ? ticket.priority.toLowerCase() : ''}">
+            ${ticket.priority || '-'}
+          </span>
+        </td>
+        <td>
+          <div class="status-tooltip">
+            <span class="badge ${
+              isStaleTicket(ticket) ? 'stale' :
+              (ticket.status || '').toLowerCase()
+                .replace(/\(/g, ' ')
+                .replace(/\)/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/--+/g, '-')
+            }">
+              ${ticket.status || '-'}
+            </span>
+            <div class="tooltip-content">Loading history...</div>
+          </div>
+        </td>
+        <td class="view-cell">
+          <button class="view-btn" onclick="openViewPage(${originalIndex})">View</button>
+        </td>
+      `;
+
+      // Tooltip logic
+      const tooltip = row.querySelector(".tooltip-content");
+      const tooltipWrapper = row.querySelector(".status-tooltip");
+
+      tooltipWrapper.addEventListener("mouseenter", () => {
+        if (tooltip.getAttribute("data-loaded")) return;
+        fetch(`/get_ticket_history/${ticket.id}`)
+          .then(res => res.json())
+          .then(history => {
+            if (!history || history.length === 0) {
+              tooltip.textContent = "No history available";
+            } else {
+              tooltip.textContent = history.map(
+                h => `[${h.changed_at}] ${h.old_value || '—'} → ${h.new_value}`
+              ).join("\n");
+            }
+            tooltip.setAttribute("data-loaded", "true");
+          })
+          .catch(err => {
+            console.error("❌ Failed to load history:", err);
+            tooltip.textContent = "Error loading history";
+          });
+      });
+
+      ticketTableBody.appendChild(row);
+    });
+
+  console.log("✅ Tickets rendered successfully:", uniqueTickets.length);
+}
+
+
+
+async function loadTicketsFromBackend(source = '', streams = []) {
+  try {
+    console.log("🚀 Loading tickets…");
+
+    // === 1️⃣ Fetch user info (role + client_id)
+    const resUser = await fetch('/get_user_info');
+    const user = await resUser.json();
+    const userRole = (user.role || '').trim().toUpperCase();
+    const clientId = user.client_id || user.ClientID || null;
+
+    if (clientId) sessionStorage.setItem("client_id", clientId);
+
+    // === 2️⃣ Determine source param
+    let computedSource = source;
+    if (!computedSource) {
+      if (["ARM", "TLC", "SAH"].includes(userRole)) computedSource = userRole;
+      else if (userRole === "SAAIT") computedSource = "";
+    }
+
+    // === 3️⃣ Build request URL
+    let url = '/get_tickets';
+    const params = [];
+    if (computedSource) params.push(`source=${encodeURIComponent(computedSource)}`);
+    if (streams?.length) params.push(`streams=${encodeURIComponent(streams.join(","))}`);
+    if (clientId) params.push(`client_id=${encodeURIComponent(clientId)}`);
+    if (params.length) url += "?" + params.join("&");
+
+    console.log("🔎 Fetching tickets from:", url);
+
+    // === 4️⃣ Fetch from backend
+    const res = await fetch(url);
+    const data = await res.json();
+
+    // === 5️⃣ Validate and normalize
+    if (!Array.isArray(data)) {
+      console.error("❌ Expected array, got:", data);
+      tickets = [];
+      renderTickets([]); // pass empty
+      return [];
+    }
+
+    // ✅ Normalize fields
+    let normalized = data.map(t => ({
+      id: String(t.id ?? t.ticket_id ?? t.TicketID ?? '').trim(),
+      dashboard: t.dashboard ?? '',
+      ticket_no: t.ticket_no ?? '',
+      stream: t.stream ?? '',
+      raised_by: t.raised_by ?? '',
+      subject: t.subject ?? '',
+      date_logged: t.date_logged ?? '',
+      closed_date: t.closed_date ?? '',
+      priority: t.priority ?? '',
+      status: t.status ?? '',
+      assigned_to: t.assigned_to ?? '',
+      description: t.description ?? '',
+      comments: t.comments ?? '',
+      attachment: t.attachment ?? ''
+    }));
+
+    // === 6️⃣ Deduplicate by unique id/ticket_no
+    const seen = new Set();
+    normalized = normalized.filter(t => {
+      const key = t.id || t.ticket_no;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // === 7️⃣ Update global and render
+    tickets = normalized;
+    renderTickets(tickets);
+
+    console.log(`✅ Loaded ${tickets.length} unique tickets for ClientID ${clientId}`);
+    return tickets;
+
+  } catch (err) {
+    console.error("❌ loadTicketsFromBackend error:", err);
+    tickets = [];
+    renderTickets([]);
+    throw err;
+  }
+}
+
+async function loadClientWiseDropdowns(clientId) {
+  try {
+    const res = await fetch(`/get_dropdown_data?client_id=${encodeURIComponent(clientId)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to fetch dropdown data");
+
+    // Populate Stream Filter
+    const streamSelect = document.getElementById("streamFilter");
+    streamSelect.innerHTML = `<option value="">All</option>`;
+    data.streams.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.name;
+      opt.textContent = s.name;
+      streamSelect.appendChild(opt);
+    });
+
+    // Populate Status Filter
+    const statusSelect = document.getElementById("statusFilter");
+    statusSelect.innerHTML = `<option value="">All</option>`;
+    data.statuses.forEach(st => {
+      const opt = document.createElement("option");
+      opt.value = st.name;
+      opt.textContent = st.name;
+      statusSelect.appendChild(opt);
+    });
+
+    // Populate Priority Filter
+    const prioritySelect = document.getElementById("priorityFilter");
+    prioritySelect.innerHTML = `<option value="">All</option>`;
+    data.priorities.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.name;
+      opt.textContent = p.name;
+      prioritySelect.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("❌ Error loading client-wise dropdowns:", err);
+  }
+}
+
+ 
+ 
+function toggleComment(link) {
+  const wrapper = link.closest('.comment-wrapper');
+  wrapper.classList.toggle('expanded');
+  link.innerText = wrapper.classList.contains('expanded') ? 'Less' : 'More';
+}
+ 
+window.addEventListener("load", async () => {
+  // 1) fetch user info and set role/name
+  try {
+    const res = await fetch("/get_user_info");
+    const data = await res.json();
+    if (data && data.role) {
+      role = data.role.trim().toUpperCase();
+      const username = data.username;
+      console.log("✅ Logged-in user:", username);
+      console.log("🎯 Role (project scope):", role);
+      sessionStorage.setItem("role", role);
+      sessionStorage.setItem("name", username);
+
+      
+      // 🔹 extra safeguard: if SAH, immediately fix modal fields
+      if (role === "SAH") {
+        const modalStreamLabel = document.getElementById("modalStreamLabel");
+        if (modalStreamLabel) modalStreamLabel.innerText = "Project";
+
+        const modalDashboardLabel = document.getElementById("modalDashboardLabel");
+        const modalDashboard = document.getElementById("modalDashboard");
+        const customDashboard = document.getElementById("customDashboard");
+
+        if (modalDashboardLabel) modalDashboardLabel.style.display = "none";
+        if (modalDashboard) modalDashboard.style.display = "none";
+        if (customDashboard) customDashboard.style.display = "none";
+
+        const tableDashboardHeader = document.getElementById("tableDashboardHeader");
+        if (tableDashboardHeader) tableDashboardHeader.style.display = "none";
+      }
+    } else {
+      console.warn("❗ No role found in /get_user_info");
+    }
+  } catch (err) {
+    console.error("❌ Failed to fetch user info:", err);
+  }
+
+  // 🔹 Force-close Add Ticket modal on page load (prevents auto-opening bug)
+  const ticketModal = document.getElementById("ticketModal");
+  if (ticketModal) ticketModal.style.display = "none";
+
+
+
+  // 3) restore previously selected slicer/filter values
+  restoreFilters();
+
+  // 4) load tickets with restored values
+  const slicer = document.getElementById("sourceSlicer");
+  const sourceVal = slicer ? slicer.value : "";
+  await loadTicketsFromBackend(sourceVal, getSelectedStreams()).catch(e => {
+    console.warn("Initial tickets load failed", e);
+  });
+
+  // 5) re-attach listeners (they’ll call saveFilters() + reload)
+  if (slicer) {
+    slicer.addEventListener("change", () => {
+      saveFilters();
+      loadTicketsFromBackend(slicer.value, getSelectedStreams());
+    });
+  }
+
+
+  if (streamFilter) {
+    streamFilter.addEventListener("change", () => {
+      saveFilters();
+      const src = slicer ? slicer.value : "";
+      loadTicketsFromBackend(src, getSelectedStreams());
+    });
+  }
+});
+
+ 
+ 
+function openImageModal(url) {
+  const modal = document.getElementById("imageModal");
+  const img = document.getElementById("imageModalContent");
+  img.src = url;
+  modal.style.display = "flex";
+}
+ 
+document.getElementById("imageModal").onclick = function () {
+  this.style.display = "none";  // close on click
+};
+ 
+ 
+function autoResizeTextarea(el) {
+  el.style.height = "auto";  // reset height
+  el.style.height = (el.scrollHeight + 5) + "px"; // fit content
+}
+
+// ✅ Ensure description textarea becomes editable & resizes
+const editBtn = document.getElementById("editButton");
+if (editBtn) {
+  editBtn.addEventListener("click", () => {
+    // enable all form fields
+    document.querySelectorAll("#ticketDetailForm input, #ticketDetailForm select, #ticketDetailForm textarea")
+      .forEach(el => el.removeAttribute("disabled"));
+
+    // specifically handle description
+    const descEl = document.getElementById("description");
+    if (descEl) {
+      descEl.removeAttribute("disabled");   // force unlock
+      descEl.readOnly = false;              // in case readonly is set anywhere
+
+      // expand once immediately
+      descEl.style.height = "auto";
+      descEl.style.height = (descEl.scrollHeight + 5) + "px";
+
+      // auto-resize as user types (only add once)
+      if (!descEl.dataset.resizeListener) {
+        descEl.addEventListener("input", () => {
+          descEl.style.height = "auto";
+          descEl.style.height = (descEl.scrollHeight + 5) + "px";
+        });
+        descEl.dataset.resizeListener = "true";
+      }
+    }
+  });
+}
+
+
+
+
+// document.getElementById("userBtn").onclick = () => {
+//   window.location.href = "/users.html";
+// };
+function loadUsers() {
+  fetch("/saait_users")
+    .then(res => res.json())
+    .then(users => {
+      const tbody = document.querySelector("#userTable tbody");
+      tbody.innerHTML = "";
+      users.forEach(u => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.status}</td>
+          <td><button onclick="deleteUser(${u.id})">Delete</button></td>`;
+        tbody.appendChild(row);
+      });
+    });
+}
+
+// document.getElementById("openAddUser").onclick = () => {
+//   document.getElementById("addUserModal").style.display = "flex";
+// };
+
+function addUser() {
+  const name = document.getElementById("newUserName").value;
+  const email = document.getElementById("newUserEmail").value;
+  const password = document.getElementById("newUserPassword").value;
+
+  fetch("/add_saait_user", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name, email, password})
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("User added");
+    document.getElementById("addUserModal").style.display = "none";
+    loadUsers();
+    loadDropdownUsers(); // refresh ticket form dropdowns
+  });
+}
+
+function deleteUser(id) {
+  if (!confirm("Delete this user?")) return;
+  fetch(`/delete_saait_user/${id}`, {method:"DELETE"})
+    .then(res => res.json())
+    .then(() => {
+      alert("User deleted");
+      loadUsers();
+      loadDropdownUsers();
+    });
+}
+
+// async function populatePriorityDropdown() {
+//     try {
+//         const res = await fetch('/get_priority');
+//         if (!res.ok) throw new Error('Network error');
+//         const priorities = await res.json();
+//         const modalPriority = document.getElementById('modalPriority');
+//         modalPriority.innerHTML = '<option value="">Select Priority</option>';
+//         if (Array.isArray(priorities)) {
+//             priorities.forEach(p => {
+//                 const option = document.createElement('option');
+//                 option.value = p.name;
+//                 option.textContent = p.name;
+//                 modalPriority.appendChild(option);
+//             });
+//         }
+//     } catch (err) {
+//         console.error('Failed to load priorities:', err);
+//     }
+// }
+
+// document.addEventListener('DOMContentLoaded', populatePriorityDropdown);
+
+// async function populateSubjectDropdown() {
+//     try {
+//         const res = await fetch('/get_subject');
+//         if (!res.ok) throw new Error('Network error');
+//         const subjects = await res.json();
+//         const modalSubject = document.getElementById('modalSubject');
+//         modalSubject.innerHTML = '<option value="">Select Subject</option>';
+//         if (Array.isArray(subjects)) {
+//             subjects.forEach(s => {
+//                 const option = document.createElement('option');
+//                 option.value = s.name;
+//                 option.textContent = s.name;
+//                 modalSubject.appendChild(option);
+//             });
+//         }
+//     } catch (err) {
+//         console.error('Failed to load subjects:', err);
+//     }
+// }
+
+// // Call this on document ready or modal open
+// document.addEventListener('DOMContentLoaded', populateSubjectDropdown);
+
+// async function populateStatusDropdown() {
+//     try {
+//         const res = await fetch('/get_status');
+//         if (!res.ok) throw new Error('Network error');
+//         const statuses = await res.json();
+//         const modalStatus = document.getElementById('modalStatus');
+//         modalStatus.innerHTML = '<option value="">Select Status</option>';
+//         if (Array.isArray(statuses)) {
+//             statuses.forEach(s => {
+//                 const option = document.createElement('option');
+//                 option.value = s.name;
+//                 option.textContent = s.name;
+//                 modalStatus.appendChild(option);
+//             });
+//         }
+//     } catch (err) {
+//         console.error('Failed to load statuses:', err);
+//     }
+// }
+
+// document.addEventListener('DOMContentLoaded', populateStatusDropdown);
+
+
+
+
+
+
+
+ 
+document.addEventListener("DOMContentLoaded", () => { 
+  // 🔹 Existing role logic
+  const role = (sessionStorage.getItem("role") || "").toUpperCase();
+  const userBtn = document.getElementById("userBtn");
+
+  if (userBtn) {
+    if (role === "SAAIT") {
+      userBtn.style.display = "inline-block";  // ✅ only SAAIT sees
+    } else {
+      userBtn.style.display = "none";          // ❌ hide everywhere else
+    }
+  }
+
+//   // 🔹 New Stream + Stream2 logic
+//   const streamDropdown = document.getElementById("modalStream");
+//   const stream2Dropdown = document.getElementById("modalDashboard");
+//   const customStream = document.getElementById("customStream");
+//   const customStream2 = document.getElementById("customDashboard");
+
+//   // ✅ Load streams dynamically
+//   fetch("/get_stream1")
+//     .then(res => res.json())
+//     .then(streams => {
+//       streams.forEach(s => {
+//         let opt = document.createElement("option");
+//         opt.value = s;
+//         opt.textContent = s;
+//         streamDropdown.insertBefore(opt, streamDropdown.querySelector("option[value='Other']"));
+//       });
+//     });
+
+//   // ✅ When stream changes → load stream2
+//   streamDropdown.addEventListener("change", () => {
+//     if (streamDropdown.value === "Other") {
+//       customStream.style.display = "block";
+//       stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
+//     } else {
+//       customStream.style.display = "none";
+//       stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
+
+//       fetch(`/get_stream2/${encodeURIComponent(streamDropdown.value)}`)
+//         .then(res => res.json())
+//         .then(stream2s => {
+//           stream2s.forEach(s2 => {
+//             let opt = document.createElement("option");
+//             opt.value = s2;
+//             opt.textContent = s2;
+//             stream2Dropdown.appendChild(opt);
+//           });
+//         });
+//     }
+//   });
+
+//   // ✅ Show input when Stream2 = Other
+//   // No "Other" option for Stream2 → always hide customStream2
+// stream2Dropdown.addEventListener("change", () => {
+//   customStream2.style.display = "none";
+// });
+
+
+  // // ✅ On ticket form submit → save new stream/stream2 if "Other"
+  // document.getElementById("ticketForm").addEventListener("submit", async () => {
+  //   const streamVal = streamDropdown.value === "Other" ? customStream.value : streamDropdown.value;
+  //   const stream2Val = stream2Dropdown.value === "Other" ? customStream2.value : stream2Dropdown.value;
+  //   const ticketNoInput = document.getElementById("modalTicketNo");
+
+  //   if (streamDropdown.value === "Other" || stream2Dropdown.value === "Other") {
+  //     await fetch("/add_stream", {
+  //       method: "POST",
+  //       headers: {"Content-Type": "application/json"},
+  //       body: JSON.stringify({stream: streamVal, stream2: stream2Val})
+  //     });
+  //   }
+  // });
+});
+
+ 
+ 
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('clientBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.getElementById('clientDropdown').style.display = 'block';
+        document.getElementById('projectDropdown').style.display = 'none';
+    });
+    document.getElementById('projectBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.getElementById('projectDropdown').style.display = 'block';
+        document.getElementById('clientDropdown').style.display = 'none';
+    });
+    window.onclick = function(event) {
+        document.getElementById('clientDropdown').style.display = 'none';
+        document.getElementById('projectDropdown').style.display = 'none';
+    };
+});
+ 
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadDropdownData();  // Load Streams, Priority, Status, Subject
+  await loadClients();   
+}
+ 
+)
+ 
+ // ✅ Cancel button for Add Ticket modal
+document.getElementById("modalCancelBtn").addEventListener("click", () => {
+  ticketModal.style.display = "none";
+});
+ 
+
+// ✅ Client & Project Button Redirects (Final Working Version)
+window.addEventListener("load", () => {
+  console.log("Redirect buttons script loaded"); // Debug line
+ 
+  const clientBtn = document.getElementById("clientBtn");
+  const projectBtn = document.getElementById("projectBtn");
+ 
+  console.log("clientBtn:", clientBtn);
+  console.log("projectBtn:", projectBtn);
+ 
+  if (clientBtn) {
+    clientBtn.onclick = (e) => {
+      e.preventDefault();
+      console.log("Client clicked");
+      window.location.href = "/view_clients";
+    };
+  }
+ 
+  if (projectBtn) {
+    projectBtn.onclick = (e) => {
+      e.preventDefault();
+      console.log("Project clicked");
+      window.location.href = "/view_projects";
+    };
+  }
+});
+ 
+ 
+document.addEventListener("DOMContentLoaded", () => {
+  const storedClientId = sessionStorage.getItem("client_id");
+  if (storedClientId) {
+    console.log("Auto-loading projects for client:", storedClientId);
+    loadProjectsDropdown(storedClientId);
+  } else {
+    console.warn("No client_id found in sessionStorage");
+  }
+});
+
+// ✅ Logout Button
+document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/logout", { method: "POST" });
+    if (res.ok) {
+      window.location.href = "/login";  // redirect to login page
+    } else {
+      alert("Logout failed. Please try again.");
+    }
+  } catch (err) {
+    console.error("Logout error:", err);
+    alert("An error occurred during logout.");
+  }
+});
+
+// ✅ Cancel button in Create Client Modal
+document.getElementById("cancelModal")?.addEventListener("click", () => {
+  document.getElementById("createClientModal").style.display = "none";
+});
+
+// Also allow clicking the "×" (close) icon to close the modal
+document.getElementById("closeModal")?.addEventListener("click", () => {
+  document.getElementById("createClientModal").style.display = "none";
+});
+
+window.addEventListener("click", (event) => {
+  const modal = document.getElementById("createClientModal");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
+
+ document.addEventListener("DOMContentLoaded", async () => {
+  const clientId = sessionStorage.getItem("client_id");
+  if (clientId) {
+    await loadClientWiseDropdowns(clientId);
+  }
+
+  // If using a client selector modal:
+  const clientDropdown = document.getElementById("selectClientDropdown");
+  if (clientDropdown) {
+    clientDropdown.addEventListener("change", async (e) => {
+      const selectedClient = e.target.value;
+      if (selectedClient) {
+        await loadClientWiseDropdowns(selectedClient);
+        await loadTicketsFromBackend(); // reload table with new client
+      }
+    });
+  }
+});
+
+ 
+
+ 
+
+</script>
+</body>
+</html>
+ 
+ 
+ 
+ 
+ 

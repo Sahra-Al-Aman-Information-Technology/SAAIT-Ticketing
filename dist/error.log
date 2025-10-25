@@ -1,0 +1,25 @@
+2025-08-26 12:51:18,816 - INFO - \U0001f517 Attempting DB connection (try 1/3)...
+2025-08-26 12:51:19,247 - INFO - \u2705 Database connection established
+2025-08-26 12:51:19,358 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.17:5000
+2025-08-26 12:51:19,358 - INFO - [33mPress CTRL+C to quit[0m
+2025-08-26 12:51:22,997 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:22] "[32mGET / HTTP/1.1[0m" 302 -
+2025-08-26 12:51:23,022 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:23] "GET /login HTTP/1.1" 200 -
+2025-08-26 12:51:24,357 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:24] "GET /static/FINAL%20LOGO%20SAAIT.png HTTP/1.1" 200 -
+2025-08-26 12:51:24,407 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:24] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-08-26 12:51:31,440 - INFO - \U0001f517 Attempting DB connection (try 1/3)...
+2025-08-26 12:51:31,757 - INFO - \u2705 Database connection established
+2025-08-26 12:51:31,858 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:31] "POST /login HTTP/1.1" 200 -
+2025-08-26 12:51:32,113 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:32] "GET /Saait.html HTTP/1.1" 200 -
+2025-08-26 12:51:32,129 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:32] "[36mGET /static/FINAL%20LOGO%20SAAIT.png HTTP/1.1[0m" 304 -
+2025-08-26 12:51:32,130 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:32] "GET /static/arm%20LOGO.jpeg HTTP/1.1" 200 -
+2025-08-26 12:51:32,185 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:32] "GET /get_user_info HTTP/1.1" 200 -
+2025-08-26 12:51:32,195 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:32] "GET /get_user_info HTTP/1.1" 200 -
+2025-08-26 12:51:32,203 - INFO - \U0001f517 Attempting DB connection (try 1/3)...
+2025-08-26 12:51:32,223 - INFO - \u2705 Database connection established
+2025-08-26 12:51:32,393 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:32] "GET /get_tickets?source=ARM HTTP/1.1" 200 -
+2025-08-26 12:51:41,257 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:41] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-08-26 12:51:41,263 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:41] "GET /login HTTP/1.1" 200 -
+2025-08-26 12:51:41,269 - INFO - 127.0.0.1 - - [26/Aug/2025 12:51:41] "[36mGET /static/FINAL%20LOGO%20SAAIT.png HTTP/1.1[0m" 304 -

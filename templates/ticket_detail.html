@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket {{ ticket.ticket_no }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #f8f9fa;
+    }
+    header {
+      background: #010b13;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      width: 180px;
+      background: #f1f1f1;
+    }
+    .buttons {
+      margin-top: 15px;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+ 
+    .buttons button {
+      margin-right: 10px;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .edit-btn { background: #007bff; color: white; }
+    .delete-btn { background: #dc3545; color: white; }
+    .save-btn { background: #28a745; color: white; display: none; }
+    .cancel-btn { background: #6c757d; color: white; display: none; }
+    .comments {
+      margin-top: 30px;
+    }
+    .comment {
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+    }
+
+    /* Bigger description field */
+#description {
+  min-height: 130px !important;   /* taller box */
+  width: 100% !important;         /* full width */
+  font-size: 1rem;
+  padding: 10px;
+  resize: vertical;               /* user can stretch */
+}
+.editable-input,
+.editable-select,
+.editable-textarea {
+  width: 100%;              /* full width in cell */
+  padding: 8px 10px;        /* more space inside */
+  font-size: 14px;
+  border: 1px solid #ccc;   /* soft grey border */
+  border-radius: 6px;       /* rounded corners */
+  box-sizing: border-box;   /* prevents overflow */
+  background: #fff;
+}
+
+.editable-input:focus,
+.editable-select:focus,
+.editable-textarea:focus {
+  outline: none;
+  border-color: #888;       /* darker grey on focus */
+}
+
+.comment {
+
+  border-bottom: 1px solid #ddd;
+
+  padding: 8px 0;
+
+  white-space: pre-line;   /* ✅ makes \n show as line breaks */
+
+}
+ 
+/* Override all button hover colors */
+button:hover,
+.btn:hover {
+  background: #6c757d !important;  /* gray */
+  color: #fff !important;
+}
+
+  </style>
+</head>
+
+
+<body>
+  
+
+  <header><Strong>
+    Ticket Detail - {{ ticket.ticket_no }}
+    </Strong>
+  </header>
+  <div class="container">
+
+    <button class="btn btn-secondary" style="border-radius: 6px; padding: 6px 14px;"
+          onclick="window.location.href='/Saait.html'">← Back</button>
+    <br>
+    <br>
+ 
+    <h2>Ticket Information</h2>
+   
+    <table>
+
+       <input type="hidden" id="ticket_id" value="{{ ticket.id }}">
+<tr>
+  <th>Ticket No</th>
+  <td>
+    <input
+      id="ticket_no_edit"
+      type="text"
+      value="{{ ticket.ticket_no if ticket.ticket_no else 'Pending Assignment' }}"
+      class="editable-select"
+      disabled
+      style="background-color:#f8f9fa; color:#000; cursor:not-allowed;"
+    >
+  </td>
+</tr>
+
+
+
+  <!-- ✅ Project Dropdown -->
+<tr>
+  <th>Project</th>
+  <td> <span id="project_text" data-project-id="{{ ticket.ProjectID }}">{{ ticket.project_name }}</span> <select
+      id="projectDropdown" class="editable-select" style="display:none" disabled>
+      <option value="">Select Project</option>
+    </select> </td>
+</tr>
+<tr>
+  <th>Stream</th>
+  <td> <span id="stream">{{ ticket.stream }}</span> <select id="streamDropdown" class="editable-select"
+      style="display:none" disabled>
+      <option value="">Select Stream</option>
+    </select> </td>
+</tr>
+<tr>
+  <th>Stream 2</th>
+  <td> <span id="dashboard">{{ ticket.dashboard }}</span> <select id="stream2Dropdown" class="editable-select"
+      style="display:none" disabled>
+      <option value="">Select Stream 2</option>
+    </select> </td>
+</tr>
+
+
+  <tr><th>Date Logged</th><td><span id="date_logged">{{ ticket.date_logged }}</span></td></tr>
+  <tr><th>Status</th><td><span id="status">{{ ticket.status }}</span></td></tr>
+  <tr><th>Priority</th><td><span id="priority">{{ ticket.priority }}</span></td></tr>
+  <tr><th>Assigned To</th><td><span id="assignedto" data-user-id="{{ ticket.assigned_to_id }}">{{ ticket.assigned_to }}</span></td></tr>
+  <tr><th>Raised By</th><td><span id="raisedby" data-user-id="{{ ticket.raised_by_id }}">{{ ticket.raised_by }}</span></td></tr>
+  <tr><th>Closed Date</th><td><span id="closed_date">{{ ticket.closed_date or 'None' }}</span></td></tr>
+  <tr><th>Subject</th><td><span id="subject">{{ ticket.subject }}</span></td></tr>
+  <tr><th>Description</th><td><span id="description">{{ ticket.description }}</span></td></tr>
+  <tr>
+    <th>Attachment</th>
+    <td>
+      {% if ticket.attachment %}
+        <a href="{{ ticket.attachment }}" target="_blank">View Attachment</a>
+      {% else %}
+        None
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+   <div class="buttons">
+  {% if ticket.status != 'Closed' %}
+    <button id="editBtn" class="edit-btn">Edit</button>
+  <button id="saveBtn" class="save-btn" style="display:none;">Save</button>
+  <button id="cancelBtn" class="cancel-btn" style="display:none;">Cancel</button>
+  {% endif %}
+  <button class="delete-btn" onclick="deleteTicket()">Delete</button>
+</div>
+
+
+    <div class="comments">
+      <h2>Comments</h2>
+      <div id="commentHistory">
+        {% if ticket.comments %}
+          {% for c in ticket.comments|reverse %}
+  <div class="comment">{{ c }}</div>
+  {% endfor %}
+        {% else %}
+          <p><i>No comments yet.</i></p>
+        {% endif %}
+      </div>
+ 
+      <!-- New comment box, disabled by default -->
+      <textarea id="new_comment"
+                placeholder="Add a new comment..."
+                style="width:100%; min-height:80px; margin-top:10px;"
+                disabled></textarea>
+    </div>
+  </div>
+ 
+ 
+<script>
+const userRole = "{{ role }}"; // From backend template
+const role = userRole.toUpperCase();
+
+let originalValues = {};
+
+
+async function loadStreams(projectId, currentStreamName = "", currentStream2Name = "", disableAfterLoad = true) {
+  const streamDropdown = document.getElementById("streamDropdown");
+  const stream2Dropdown = document.getElementById("stream2Dropdown");
+
+  // Reset options
+  streamDropdown.innerHTML = '<option value="">Select Stream</option>';
+  stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
+
+  try {
+    const res = await fetch(`/getstreamsbyprojects?projectid=${encodeURIComponent(projectId)}`);
+    const data = await res.json();
+
+    if (!data?.streamsmap) {
+      if (streamDropdown) streamDropdown.disabled = true;
+      if (stream2Dropdown) stream2Dropdown.disabled = true;
+      return;
+    }
+
+    const streamList = Object.keys(data.streamsmap || {});
+    streamList.forEach(s1 => {
+      const opt = document.createElement("option");
+      opt.value = s1;
+      opt.textContent = s1;
+      streamDropdown.appendChild(opt);
+    });
+
+    // Preselect Stream and Stream 2
+    if (currentStreamName && streamList.includes(currentStreamName)) {
+      streamDropdown.value = currentStreamName;
+
+      const stream2List = data.streamsmap[currentStreamName] || [];
+      stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
+      stream2List.forEach(s2 => {
+        const opt = document.createElement("option");
+        opt.value = s2;
+        opt.textContent = s2;
+        stream2Dropdown.appendChild(opt);
+      });
+
+      if (currentStream2Name && (data.streamsmap[currentStreamName] || []).includes(currentStream2Name)) {
+        stream2Dropdown.value = currentStream2Name;
+      }
+    }
+
+    // Link Stream 1 -> Stream 2 options (effective only when enabled in edit)
+    streamDropdown.onchange = () => {
+      const selected = streamDropdown.value;
+      stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
+      if (selected && data.streamsmap[selected]) {
+        data.streamsmap[selected].forEach(s2 => {
+          const opt = document.createElement("option");
+          opt.value = s2;
+          opt.textContent = s2;
+          stream2Dropdown.appendChild(opt);
+        });
+      }
+    };
+  } catch (err) {
+    console.error("Failed to load streams:", err);
+  }
+
+  // Keep disabled only if flag is true
+  if (disableAfterLoad) {
+    if (streamDropdown) streamDropdown.disabled = true;
+    if (stream2Dropdown) stream2Dropdown.disabled = true;
+  }
+}
+
+
+// Enable editing of ticket fields
+window.enableEdit = async function () {
+
+  const saveBtn = document.querySelector(".save-btn");
+  if (saveBtn && saveBtn.style.display === "inline-block") return;
+
+  // 1️⃣ Enable editable fields by ID
+  const editableIds = [
+    "projectDropdown", "streamDropdown", "stream2Dropdown",
+    "status", "priority", "subject", "description",
+    "date_logged", "closed_date", "detailAssignedTo",
+    "detailRaisedBy", "new_comment"
+  ];
+  editableIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = false;
+  });
+
+  // 2️⃣ Toggle project/stream spans → dropdowns
+  const projSpan = document.getElementById("project_text");
+  const projSel = document.getElementById("projectDropdown");
+  const s1Span = document.getElementById("stream");
+  const s1Sel = document.getElementById("streamDropdown");
+  const s2Span = document.getElementById("dashboard");
+  const s2Sel = document.getElementById("stream2Dropdown");
+
+  [projSpan, s1Span, s2Span].forEach(el => { if (el) el.style.display = "none"; });
+  [projSel, s1Sel, s2Sel].forEach(el => { if (el) el.style.display = ""; el.disabled = false; });
+
+  // 3️⃣ Set current project and streams
+  const currentProjectId = projSpan?.dataset.projectId || "";
+  const currentStream = (s1Span?.textContent || "").trim();
+  const currentStream2 = (s2Span?.textContent || "").trim();
+
+  if (projSel && currentProjectId) projSel.value = currentProjectId;
+
+  // 4️⃣ Load streams (keep enabled during edit)
+  if (currentProjectId) await loadStreams(currentProjectId, currentStream, currentStream2, false);
+  if (projSel) projSel.onchange = e => loadStreams(e.target.value, "", "", false);
+
+  // 5️⃣ Show Save / Cancel, hide Edit/Delete
+  if (typeof setButtonVisibility === "function") {
+    setButtonVisibility({ edit: false, save: true, cancel: true, del: false });
+  } else {
+    document.querySelector(".edit-btn")?.style.setProperty("display", "none");
+    document.querySelector(".save-btn")?.style.setProperty("display", "inline-block");
+    document.querySelector(".cancel-btn")?.style.setProperty("display", "inline-block");
+    document.querySelector(".delete-btn")?.style.setProperty("display", "none");
+  }
+
+  // 6️⃣ Replace spans → editable inputs/selects
+  const spans = document.querySelectorAll("td span");
+  for (const span of spans) {
+    if (["project_text", "stream", "dashboard"].includes(span.id)) continue;
+
+    const text = span.textContent.trim();
+    let field;
+
+    switch (span.id) {
+      case "description":
+      case "subject":
+        field = document.createElement(span.id === "description" ? "textarea" : "input");
+        field.value = text;
+        field.id = span.id + "_edit";
+        field.className = span.id === "description" ? "editable-textarea" : "editable-input";
+        field.style.width = "100%";
+        if (span.id === "description") field.style.minHeight = "200px";
+        break;
+
+      case "status":
+case "priority":
+  field = document.createElement("select");
+  field.id = span.id + "_edit";
+  field.className = "editable-select";
+  try {
+    const projectId = projSel?.value || "";
+    const endpoint = span.id === "status"
+      ? `/getstatus?projectid=${encodeURIComponent(projectId)}`
+      : `/getpriority?projectid=${encodeURIComponent(projectId)}`;
+    const res = await fetch(endpoint);
+    const items = await res.json();
+
+    field.innerHTML = `<option value="">Select ${span.id}</option>`;
+    (items || []).forEach(i => {
+      const opt = document.createElement("option");
+      const val = i.StatusID || i.PriorityID || i.name || i.Name || i.status || i.priority;
+      const textLabel = i.StatusName || i.PriorityName || i.name || i.Name || "";
+      opt.value = val;
+      opt.textContent = textLabel || val;
+      if (textLabel && textLabel.toLowerCase() === text.toLowerCase()) opt.selected = true;
+      else if (!textLabel && String(val).toLowerCase() === text.toLowerCase()) opt.selected = true;
+      field.appendChild(opt);
+
+              // ✅ Auto-fill today's date when status changes to "Closed"
+
+        if (span.id === "status") {
+
+          field.addEventListener("change", () => {
+
+            const closedDateInput = document.getElementById("closed_date_edit");
+
+            if (closedDateInput) {
+
+              if (field.options[field.selectedIndex]?.textContent?.trim().toLowerCase() === "closed") {
+
+                // enable and set today's date
+
+                closedDateInput.disabled = false;
+
+                const today = new Date();
+
+                const yyyy = today.getFullYear();
+
+                const mm = String(today.getMonth() + 1).padStart(2, "0");
+
+                const dd = String(today.getDate()).padStart(2, "0");
+
+                closedDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+              } else {
+
+                // disable and clear if not closed
+
+                closedDateInput.value = "";
+
+                closedDateInput.disabled = true;
+
+              }
+
+            }
+
+          });
+
+        }
+
+ 
+    });
+
+    // ✅ Enable closed date picker dynamically when "Closed" selected
+    field.addEventListener("change", () => {
+      const closedDateInput = document.getElementById("closed_date_edit");
+      if (!closedDateInput) return;
+      const selectedText = field.options[field.selectedIndex]?.textContent.trim().toLowerCase();
+      if (selectedText === "closed") {
+        closedDateInput.disabled = false;
+        const today = new Date().toISOString().split("T")[0];
+        closedDateInput.max = today; // prevent future dates
+      } else {
+        closedDateInput.value = "";
+        closedDateInput.disabled = true;
+      }
+    });
+
+    // ✅ Auto-enable if status is already "Closed"
+    if (text.trim().toLowerCase() === "closed") {
+      const closedDateInput = document.getElementById("closed_date_edit");
+      if (closedDateInput) {
+        const today = new Date().toISOString().split("T")[0];
+        closedDateInput.disabled = false;
+        closedDateInput.max = today;
+      }
+    }
+
+  } catch (err) {
+    console.error(`Failed to load ${span.id} options:`, err);
+  }
+  break;
+
+
+     case "assignedto":
+case "raisedby": {
+  const isAssigned = (span.id === "assignedto");
+  field = document.createElement("select");
+  field.className = "editable-select";
+  field.id = isAssigned ? "detailAssignedTo_edit" : "detailRaisedBy_edit";
+  field.innerHTML = `<option value="">Select ${isAssigned ? "Assignee" : "User"}</option>`;
+
+  try {
+    const projectId = projSel?.value || "";
+    const url = projectId
+      ? `/getprojectusers?projectid=${encodeURIComponent(projectId)}`
+      : `/getprojectusers`;
+    const res = await fetch(url);
+    const users = await res.json();
+
+    const norm = (Array.isArray(users) ? users : [])
+      .map(u => ({
+        id: String(u.userid ?? u.user_id ?? u.id ?? "").trim(),
+        name: String(u.username ?? u.user_name ?? u.name ?? u.userName ?? "").trim(),
+        isRaisedBy: (u.isRaisedBy === 1 || u.isRaisedBy === true),
+        isAssignedTo: (u.isAssignedTo === 1 || u.isAssignedTo === true)
+      }))
+      .filter(x => x.id && x.name);
+
+    // ✅ logic:
+    // - RaisedBy dropdown: all users who are not flagged AssignedTo + RaisedBy flagged users
+    // - AssignedTo dropdown: all users who are not flagged RaisedBy + AssignedTo flagged users
+    let finalList;
+    if (isAssigned) {
+      finalList = norm.filter(u => !u.isRaisedBy && (u.isAssignedTo || !u.isRaisedBy && !u.isAssignedTo));
+    } else {
+      finalList = norm.filter(u => !u.isAssignedTo && (u.isRaisedBy || !u.isAssignedTo && !u.isRaisedBy));
+    }
+
+    // ✅ populate dropdown
+    finalList.forEach(u => {
+      const opt = document.createElement("option");
+      opt.value = u.id;
+      opt.textContent = u.name;
+      if ((text || "").trim().toLowerCase() === u.name.toLowerCase()) {
+        opt.selected = true;
+      }
+      field.appendChild(opt);
+    });
+
+    // ✅ ensure current text appears even if not in list
+    const currentText = (text || "").trim();
+    if (
+      currentText &&
+      !Array.from(field.options).some(
+        o => o.textContent.trim().toLowerCase() === currentText.toLowerCase()
+      )
+    ) {
+      const extra = document.createElement("option");
+      extra.value = "";
+      extra.textContent = currentText;
+      extra.selected = true;
+      extra.dataset.appended = "1";
+      field.appendChild(extra);
+    }
+  } catch (err) {
+    console.error("Failed to load users:", err);
+  }
+  break;
+}
+
+
+
+
+      case "date_logged":
+      case "closed_date":
+        field = document.createElement("input");
+        field.type = "date";
+        field.value = text;
+        field.id = span.id + "_edit";
+        field.className = "editable-input";
+        if (span.id === "closed_date") field.disabled = true;
+        break;
+
+      default:
+        field = document.createElement("input");
+        field.type = "text";
+        field.value = text;
+        field.id = span.id + "_edit";
+        field.className = "editable-input";
+    }
+
+    span.style.display = "none";
+    span.parentNode.insertBefore(field, span.nextSibling);
+  }
+};
+
+
+
+
+function cancelEdit() {
+  try {
+    // Helper to read visible text from select
+    const optText = sel => (sel && sel.selectedOptions && sel.selectedOptions[0]?.textContent?.trim()) || "";
+
+    // 1) Assigned/Raised: replace edit select with span to avoid stacking
+    const assignedSel = document.getElementById("detailAssignedTo_edit") || document.getElementById("detailAssignedTo");
+    const raisedSel   = document.getElementById("detailRaisedBy_edit")   || document.getElementById("detailRaisedBy");
+    const assignedSpan = document.getElementById("assignedto");
+    const raisedSpan   = document.getElementById("raisedby");
+
+    if (assignedSpan && assignedSel) {
+      assignedSpan.textContent = optText(assignedSel);
+      if (assignedSel.tagName === "SELECT") assignedSel.replaceWith(assignedSpan);
+    }
+    if (raisedSpan && raisedSel) {
+      raisedSpan.textContent = optText(raisedSel);
+      if (raisedSel.tagName === "SELECT") raisedSel.replaceWith(raisedSpan);
+    }
+
+    // 2) Core editable fields: if currently inputs/selects, turn them back into spans
+    ["status", "priority", "subject", "description", "date_logged", "closed_date"].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName === "SELECT" || el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+        const span = document.createElement("span");
+        span.id = id;
+        span.textContent = (el.tagName === "SELECT") ? optText(el) : (el.value || "").trim();
+        el.replaceWith(span);
+      }
+    });
+
+    // 🔹 Remove all dynamically added editable controls before resetting
+document.querySelectorAll("td input, td select, td textarea").forEach(el => {
+  // keep dropdowns like projectDropdown/streamDropdown since they're reused
+  if (!["projectDropdown", "streamDropdown", "stream2Dropdown", "ticket_no_edit"].includes(el.id)) {
+    el.remove();
+  }
+});
+
+// 🔹 Show all original spans again
+document.querySelectorAll("td span").forEach(span => {
+  span.style.display = "";
+});
+
+    // 3) Project/Stream/Stream2: hide selects and show spans with current text
+    const projSel = document.getElementById("projectDropdown");
+    const projSpan = document.getElementById("project_text");
+    const stream1Sel = document.getElementById("streamDropdown");
+    const stream2Sel = document.getElementById("stream2Dropdown");
+    const streamSpan = document.getElementById("stream");
+    const dashboardSpan = document.getElementById("dashboard");
+
+    if (projSpan && projSel) projSpan.textContent = optText(projSel);
+    if (streamSpan && stream1Sel) streamSpan.textContent = optText(stream1Sel);
+    if (dashboardSpan && stream2Sel) dashboardSpan.textContent = optText(stream2Sel);
+
+    [projSel, stream1Sel, stream2Sel].forEach(el => { if (el) { el.style.display = "none"; el.disabled = true; } });
+    [projSpan, streamSpan, dashboardSpan].forEach(el => { if (el) el.style.display = ""; });
+
+    // 4) Closed date: always disabled after cancel; clear unless status Closed
+    const statusSpan = document.getElementById("status");
+    const closedDateEl = document.getElementById("closed_date");
+    if (statusSpan && closedDateEl) {
+      const statusText = statusSpan.textContent ? statusSpan.textContent.trim() : "";
+      if (!/^Closed$/i.test(statusText)) {
+        // If input existed earlier, it has been replaced by a span; nothing to clear
+      }
+      // ensure disabled state on any surviving control
+      if (closedDateEl.tagName) {
+        // if still an input somehow
+        if (closedDateEl.tagName === "INPUT") closedDateEl.value = "";
+        closedDateEl.disabled = true;
+      }
+    }
+
+    // 5) Belt-and-suspenders: disable any remaining form elements
+    document.querySelectorAll("input, select, textarea").forEach(el => { el.disabled = true; });
+
+    // 6) Toggle buttons to view mode
+    if (typeof setButtonVisibility === "function") {
+      setButtonVisibility({ edit: true, save: false, cancel: false, del: true });
+    }
+  } catch (e) {
+    console.error("cancelEdit failed", e);
+  }
+}
+
+
+
+
+
+
+async function saveChanges() {
+  try {
+    const ticketId = document.getElementById("ticket_id")?.value;
+    if (!ticketId) {
+      alert("Missing ticket ID!");
+      return;
+    }
+
+    // ✅ Collect form data
+    const formData = new FormData();
+    formData.append("id", ticketId);
+
+    // Map frontend IDs → backend expected keys
+    const mapping = {
+      subject: "subject",
+      description: "description",
+      status: "status",
+      priority: "priority",
+      date_logged: "date_logged",
+      closed_date: "closed_date",
+      detailAssignedTo: "assignedto",
+      detailRaisedBy: "raisedby",
+      projectDropdown: "project_id",
+      streamDropdown: "stream",
+      stream2Dropdown: "dashboard",
+      new_comment: "comment"
+    };
+
+    // Collect values (prefer _edit controls if they exist)
+    Object.keys(mapping).forEach(id => {
+      const el = document.getElementById(id + "_edit") || document.getElementById(id);
+      if (!el) return;
+
+      let value = "";
+      if (el.tagName === "SELECT") {
+        value = el.options[el.selectedIndex]?.value || "";
+      } else {
+        value = el.value || "";
+      }
+
+      if (id === "new_comment") value = value.trim();
+      formData.append(mapping[id], value);
+    });
+
+    // Validate required fields
+    const requiredFields = ["project_id", "stream", "dashboard"];
+    for (const key of requiredFields) {
+      if (!formData.get(key)) {
+        alert(`Please select a value for ${key.replace("_", " ")}`);
+        return;
+      }
+    }
+
+    // Handle file upload
+    const fileInput = document.getElementById("attachment");
+    if (fileInput && fileInput.files.length > 0) {
+      formData.append("attachment", fileInput.files[0]);
+    }
+
+    // 2️⃣ Send update to backend
+    const res = await fetch(`/update_ticket`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error(`Failed to save changes: ${res.statusText}`);
+
+ function updateSpanFromEdit(spanId, editIdFallback) {
+  const span = document.getElementById(spanId);
+  if (!span) return;
+
+  const transient = document.getElementById(spanId + "_edit");
+  const fallback = editIdFallback ? document.getElementById(editIdFallback) : null;
+  const edit = transient || fallback;
+
+  if (!edit) {
+    span.style.display = "";
+    return;
+  }
+
+  const orig = (span.textContent || "").trim();
+  let displayText = "";
+
+  if (edit.tagName === "SELECT") {
+    displayText = edit.options[edit.selectedIndex]?.textContent || (edit.value || "");
+  } else {
+    displayText = edit.value || edit.textContent || "";
+  }
+
+  span.textContent = (displayText && String(displayText).trim() !== "") ? displayText : orig;
+
+  // Remove or hide editable controls appropriately
+  if (transient && transient.id && transient.id.endsWith("_edit")) {
+    // hide instead of remove if it's a permanent input like ticket_no_edit
+    if (["ticket_no_edit", "date_logged_edit"].includes(transient.id)) {
+      transient.style.display = "none";
+    } else {
+      transient.remove();
+    }
+  } else if (fallback && fallback.tagName === "SELECT") {
+    // hide persistent dropdowns when not in edit mode
+    fallback.style.display = "none";
+  }
+
+  span.style.display = "";
+}
+
+
+ 
+
+    // ✅ Project / Streams / User fields
+updateSpanFromEdit("project_text", "projectDropdown", true); // keep dataset.projectId
+updateSpanFromEdit("stream", "streamDropdown");
+updateSpanFromEdit("dashboard", "stream2Dropdown");
+updateSpanFromEdit("assignedto", "detailAssignedTo_edit");
+updateSpanFromEdit("raisedby", "detailRaisedBy_edit");
+
+// ✅ Status / Priority / Subject / Description / Date fields
+["status", "priority", "subject", "description", "date_logged", "closed_date"].forEach(id => {
+  updateSpanFromEdit(id);
+});
+
+// ✅ Re-disable leftover inputs (safety)
+[
+  "status_edit", "priority_edit", "subject_edit", "description_edit",
+  "date_logged_edit", "closed_date_edit", "detailAssignedTo_edit", "detailRaisedBy_edit",
+  "projectDropdown", "streamDropdown", "stream2Dropdown"
+].forEach(eid => {
+  const el = document.getElementById(eid);
+  if (el) el.disabled = true;
+});
+
+// ✅ Reset buttons
+if (typeof setButtonVisibility === "function") {
+  setButtonVisibility({ edit: true, save: false, cancel: false, del: true });
+} else {
+  document.querySelector(".edit-btn")?.style.setProperty("display", "inline-block");
+  document.querySelector(".save-btn")?.style.setProperty("display", "none");
+  document.querySelector(".cancel-btn")?.style.setProperty("display", "none");
+  document.querySelector(".delete-btn")?.style.setProperty("display", "inline-block");
+}
+
+// ✅ Maintain dataset.projectId for future edit reloads
+const projSel = document.getElementById("projectDropdown");
+const projSpan = document.getElementById("project_text");
+if (projSel && projSpan) {
+  projSpan.dataset.projectId = projSel.value || "";
+}
+
+
+    console.log("✅ Ticket saved successfully and view reverted to spans.");
+ 
+    // --- Insert new comment in DOM immediately (so user sees it without reload) ---
+try {
+  const newCommentText = formData.get("comment") || "";
+  if (newCommentText && newCommentText.trim()) {
+    const commentHistory = document.getElementById("commentHistory");
+    if (commentHistory) {
+      // remove "No comments yet." message if present
+      const noMsg = commentHistory.querySelector("p");
+      if (noMsg) noMsg.remove();
+ 
+      // Create comment node with same formatting as server stores (no timestamp here; backend adds timestamp)
+      // If you prefer to show timestamp on frontend instantly, you can generate one similarly to backend.
+      // But safer: use server's returned comments to reflect exact timestamp.
+      const div = document.createElement("div");
+      div.className = "comment";
+      // show the plain text that user wrote until server echo arrives
+            // add same timestamp format as backend
+      const now = new Date();
+      const pad = n => n.toString().padStart(2, "0");
+      const timestamp = `[${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}]`;
+      div.textContent = `${timestamp} ${newCommentText}`;
+ 
+      // insert at top (newest above)
+      commentHistory.insertBefore(div, commentHistory.firstChild);
+ 
+      // clear the textarea
+      const textarea = document.getElementById("new_comment");
+      if (textarea) textarea.value = "";
+    }
+  }
+} catch (err) {
+  console.warn("Failed to update comment DOM immediately:", err);
+}
+ 
+
+ 
+
+    alert("Changes saved successfully!");
+  } catch (e) {
+    console.error("❌ saveChanges failed", e);
+    alert("Error saving ticket. Please try again.");
+  }
+}
+
+
+
+
+function deleteTicket() {
+    if (!confirm("Are you sure you want to delete this ticket?")) return;
+
+    fetch("/delete_ticket/{{ ticket.id }}", { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || data.error);
+        if (data.message) window.location.href = "/Saait.html";
+    });
+}
+
+
+function setButtonVisibility({ edit = false, save = false, cancel = false, del = true }) {
+    const editBtn = document.querySelector(".edit-btn");
+    const saveBtn = document.querySelector(".save-btn");
+    const cancelBtn = document.querySelector(".cancel-btn");
+    const deleteBtn = document.querySelector(".delete-btn");
+    if (editBtn) editBtn.style.display = edit ? "inline-block" : "none";
+    if (saveBtn) saveBtn.style.display = save ? "inline-block" : "none";
+    if (cancelBtn) cancelBtn.style.display = cancel ? "inline-block" : "none";
+    if (deleteBtn) deleteBtn.style.display = del ? "inline-block" : "none";
+}
+
+
+// Load users for Ticket Details dropdowns using mapping table
+
+
+
+async function loadUserDropdownsDetails(selectedRaised = null, selectedAssigned = null, projectid = null) {
+  const url = projectid ? `getprojectusers?projectid=${encodeURIComponent(projectid)}`
+                        : `getprojectusers`;
+
+  let users = [];
+  try {
+    const res = await fetch(url);
+    users = await res.json();
+  } catch (e) {
+    console.error("Failed to fetch users for dropdown", e);
+    users = [];
+  }
+
+  const norm = (Array.isArray(users) ? users : []).map(u => ({
+    id: String(u.userid ?? "").trim(),
+    name: String(u.username ?? "").trim(),
+    isRaisedBy: u.isRaisedBy === 1 || u.isRaisedBy === true,
+    isAssignedTo: u.isAssignedTo === 1 || u.isAssignedTo === true
+  })).filter(x => x.id && x.name);
+
+  const raisedSel = document.getElementById("detailRaisedBy");
+  const assignedSel = document.getElementById("detailAssignedTo");
+  if (!raisedSel || !assignedSel) return;
+
+  raisedSel.innerHTML = `<option value="">Select User</option>`;
+  assignedSel.innerHTML = `<option value="">Select Assignee</option>`;
+
+  const raisedList = norm.filter(u => u.isRaisedBy);
+  const assignedList = norm.filter(u => u.isAssignedTo);
+
+  raisedList.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = u.name;
+    raisedSel.appendChild(opt);
+  });
+
+  assignedList.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = u.name;
+    assignedSel.appendChild(opt);
+  });
+
+  const raisedPrevId = raisedSel.dataset.prevId || selectedRaised;
+  const raisedPrevName = raisedSel.dataset.prevName || "";
+  const assignedPrevId = assignedSel.dataset.prevId || selectedAssigned;
+  const assignedPrevName = assignedSel.dataset.prevName || "";
+
+  const selectByValueOrText = (sel, prevId, prevName) => {
+    if (!sel) return;
+    if (prevId) {
+      const o = Array.from(sel.options).find(opt => String(opt.value) === String(prevId));
+      if (o) { o.selected = true; return; }
+    }
+    if (prevName) {
+      const o = Array.from(sel.options).find(opt => opt.textContent.trim().toLowerCase() === prevName.trim().toLowerCase());
+      if (o) { o.selected = true; return; }
+    }
+    if (prevId || prevName) {
+      const o = document.createElement("option");
+      o.value = prevId || "";
+      o.textContent = prevName || prevId || "";
+      o.selected = true;
+      o.dataset.appended = "1";
+      sel.appendChild(o);
+    }
+  };
+
+  selectByValueOrText(raisedSel, raisedPrevId, raisedPrevName);
+  selectByValueOrText(assignedSel, assignedPrevId, assignedPrevName);
+}
+
+
+
+
+
+async function createPrioritySelect(span) {
+  const field = document.createElement("select");
+  field.className = "editable-select";
+  field.id = span.id;
+
+  try {
+    const response = await fetch('/getpriorities');
+    if (!response.ok) throw new Error('Failed to fetch priorities');
+    const priorities = await response.json();
+
+    priorities.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.name;
+      opt.textContent = p.name;
+      if (span.textContent.trim() === p.name) opt.selected = true;
+      field.appendChild(opt);
+    });
+  } catch (error) {
+    console.error("Error fetching priorities:", error);
+    // Optionally add fallback options or leave empty
+  }
+
+  return field;
+}
+
+
+// const selectElement = await createPrioritySelect(span);
+// someContainer.appendChild(selectElement);
+
+
+
+
+
+// Change Dashboard label to Report Name if TLC login
+document.addEventListener("DOMContentLoaded", function () {
+    if (role === "TLC") {
+        const label = document.getElementById("dashboardLabel");
+        if (label) label.innerText = "Report Name";
+    }
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // --- utility refs ---
+  const editBtn = document.getElementById("editBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const projectDropdown = document.getElementById("projectDropdown");
+  const projectSpan = document.getElementById("project_text");
+
+  // --- 1) Disable the exact fields that should be view-only on load ---
+  const idsToDisable = [
+    "projectDropdown","streamDropdown","stream2Dropdown",
+    "status","priority","subject","description",
+    "date_logged","closed_date","detailAssignedTo","detailRaisedBy","new_comment"
+  ];
+  idsToDisable.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.disabled = true;
+      // keep selects hidden in view mode
+      if (el.tagName === "SELECT") {
+        el.style.display = "none";
+      }
+    }
+  });
+
+  // Ensure spans are visible
+  ["project_text","stream","dashboard","assignedto","raisedby","status","priority","ticket_no","subject","description","date_logged","closed_date"].forEach(id => {
+    const s = document.getElementById(id);
+    if (s) s.style.display = "";
+  });
+
+  // Ensure buttons reflect view mode
+  setButtonVisibility({ edit: true, save: false, cancel: false, del: true });
+
+  // --- 2) Load project dropdown once for edit mode and preselect if possible ---
+  // --- 2) Load project dropdown once for edit mode and preselect if possible ---
+try {
+  const ticketId = "{{ ticket.id | default('0', true) }}"; // ✅ safe quoted value
+  if (projectDropdown) {
+    const res = await fetch(`/get_project_by_ticket?ticket_id=${encodeURIComponent(ticketId)}`);
+    const projects = await res.json();
+
+    projectDropdown.innerHTML = '<option value="">Select Project</option>';
+    (projects || []).forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = String(p.id ?? p.ProjectID);
+      opt.textContent = p.name ?? p.ProjectName;
+      projectDropdown.appendChild(opt);
+    });
+
+    // ✅ fix: handle dataset.projectId safely
+    const seedProjectId = projectSpan?.dataset.projectId;
+    const validSeed = seedProjectId && seedProjectId !== "None" && seedProjectId !== "null" && seedProjectId !== "undefined"
+      ? String(seedProjectId)
+      : (projects?.[0]?.id ?? "");
+
+    if (validSeed && Array.from(projectDropdown.options).some(o => o.value === validSeed)) {
+      projectDropdown.value = validSeed;
+    } else if (projects && projects.length > 0) {
+      projectDropdown.value = String(projects[0].id);
+    }
+
+    // ✅ ensure streams load for selected project
+    const currentStreamName = (document.getElementById("stream")?.textContent || "").trim();
+    const currentStream2Name = (document.getElementById("dashboard")?.textContent || "").trim();
+    if (projectDropdown.value) {
+      await loadStreams(projectDropdown.value, currentStreamName, currentStream2Name);
+    } else {
+      console.warn("⚠️ No valid project ID found, skipping stream load");
+    }
+  }
+} catch (err) {
+  console.error("Init: failed to load projects/streams", err);
+}
+
+
+  // Keep project/stream selects hidden in view mode (they will be shown by enableEdit)
+  if (projectDropdown) { projectDropdown.style.display = "none"; projectDropdown.disabled = true; }
+  const s1 = document.getElementById("streamDropdown");
+  const s2 = document.getElementById("stream2Dropdown");
+  if (s1) { s1.style.display = "none"; s1.disabled = true; }
+  if (s2) { s2.style.display = "none"; s2.disabled = true; }
+
+  // --- 3) Wire buttons to the global functions you already have ---
+  if (editBtn) {
+    // ensure single listener and call global enableEdit
+    editBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (typeof window.enableEdit === "function") {
+        window.enableEdit();
+      } else {
+        console.error("enableEdit not found on window");
+      }
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (typeof window.cancelEdit === "function") {
+        window.cancelEdit();
+      } else {
+        // fallback to reload (optional)
+        console.warn("cancelEdit not found, reloading page");
+        location.reload();
+      }
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (typeof window.saveChanges === "function") {
+        await window.saveChanges();
+      } else {
+        console.error("saveChanges not found on window");
+      }
+    });
+  }
+
+  // --- 4) When project select changes outside edit, keep streams ready (but disabled) ---
+  if (projectDropdown) {
+    projectDropdown.addEventListener("change", async (e) => {
+      // reload streams for the new project but keep them disabled until edit
+      await loadStreams(e.target.value, "", "");
+      if (s1) { s1.style.display = "none"; s1.disabled = true; }
+      if (s2) { s2.style.display = "none"; s2.disabled = true; }
+    });
+  }
+
+  console.log("✅ Initialization done.");
+});
+
+
+</script>
+
+
+</body>
+
+</html>

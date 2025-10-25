@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Priority</title>
+    <style>
+        body { font-family: Arial; background: #f4f6f9; padding: 30px; }
+        h2 { text-align: center; }
+        #projectDetails { background: white; padding: 15px; border-radius: 6px; width: 60%; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+        table { width: 60%; margin: 20px auto; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #007bff; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        #addPriorityForm { text-align: center; margin-top: 20px; }
+        input { padding: 8px; border-radius: 4px; border: 1px solid #aaa; }
+        button { padding: 8px 14px; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #backBtn { background: black; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
+        #backBtn:hover { background: white; color: black; border: 1px solid black; }
+    </style>
+</head>
+<body>
+ 
+<button id="backBtn" onclick="window.history.back()">⬅ Back</button>
+ 
+<h2>Manage Project Priority</h2>
+ 
+<div id="projectDetails">
+    <p><b>Project ID:</b> <span id="ProjectID"></span></p>
+    <p><b>Project Name:</b> <span id="ProjectName"></span></p>
+    <p><b>Client Name:</b> <span id="ClientName"></span></p>
+</div>
+ 
+<form id="addPriorityForm">
+    <input type="hidden" id="ProjectIDInput" name="ProjectID">
+    <input type="text" id="PriorityName" name="PriorityName" placeholder="Enter Priority Name" required>
+    <button type="submit">Add Priority</button>
+</form>
+ 
+<table>
+    <thead>
+        <tr>
+            <th>Priority ID</th>
+            <th>Priority Name</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="priorityTable"></tbody>
+</table>
+ 
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get("project_id");
+    document.getElementById("ProjectIDInput").value = projectId;
+ 
+    async function loadProjectInfo() {
+        const res = await fetch(`/get_project_info_priority?project_id=${projectId}`);
+        const data = await res.json();
+        if (!data.error) {
+            document.getElementById("ProjectID").innerText = data.ProjectID;
+            document.getElementById("ProjectName").innerText = data.ProjectName;
+            document.getElementById("ClientName").innerText = data.ClientName;
+        }
+    }
+ 
+    async function loadPriorities() {
+        const res = await fetch(`/get_priorities?project_id=${projectId}`);
+        const priorities = await res.json();
+        const table = document.getElementById("priorityTable");
+        table.innerHTML = "";
+        priorities.forEach(p => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${p.PriorityID}</td>
+                <td>${p.PriorityName}</td>
+                <td><button onclick="deletePriority(${p.PriorityID})">Delete</button></td>
+            `;
+            table.appendChild(row);
+        });
+    }
+ 
+    document.getElementById("addPriorityForm").addEventListener("submit", async e => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const res = await fetch("/add_priority", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            e.target.reset();
+            loadPriorities();
+        }
+    });
+ 
+    async function deletePriority(id) {
+        if (confirm("Delete this priority?")) {
+            const res = await fetch(`/delete_priority?priority_id=${id}`, { method: "DELETE" });
+            const data = await res.json();
+            alert(data.message);
+            loadPriorities();
+        }
+    }
+ 
+    loadProjectInfo();
+    loadPriorities();
+</script>
+</body>
+</html>
+ 
+ 

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Projects</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+ 
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+ 
+        table {
+            width: 85%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+        }
+ 
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+ 
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+ 
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+ 
+        .back-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 8px 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+ 
+        .back-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+ 
+    <h2>Projects for Client ID: {{ client_id }}</h2>
+ 
+    {% if projects and projects|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>Project ID</th>
+                <th>Project Name</th>
+                <th>Status</th>
+                <th>Created Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects %}
+            <tr>
+                <td>{{ project.ProjectID }}</td>
+                <td>{{ project.ProjectName }}</td>
+                <td>{{ project.Status }}</td>
+                <td>{{ project.CreatedDate }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="text-align:center; color:red;">No projects found for this client.</p>
+    {% endif %}
+ 
+    <button class="back-btn" onclick="window.location.href='/view_clients'">Back to Clients</button>
+ 
+</body>
+</html>
+ 
+ 

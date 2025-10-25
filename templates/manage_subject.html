@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Subjects</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+    background-color: #f8f9fa;
+}
+ 
+h2 {
+    text-align: center;
+    color: #333;
+}
+ 
+#backBtn {
+    background-color: black;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+ 
+#backBtn:hover {
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+}
+ 
+.project-info {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #555;
+}
+ 
+#addSubjectContainer {
+    width: 70%;
+    margin: 20px auto;
+    text-align: center;
+}
+ 
+input {
+    padding: 8px;
+    width: 60%;
+    margin-right: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+ 
+button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+ 
+#addBtn {
+    background-color: #28a745;
+    color: white;
+}
+ 
+#addBtn:hover {
+    background-color: #218838;
+}
+ 
+table {
+    width: 70%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+}
+ 
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+ 
+th {
+    background-color: #007bff;
+    color: white;
+}
+ 
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+ 
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+ 
+.delete-btn:hover {
+    background-color: #b52a38;
+}
+</style>
+</head>
+<body>
+ 
+<button id="backBtn" onclick="window.history.back()">⬅ Back</button>
+ 
+<h2>Manage Subjects</h2>
+ 
+<div class="project-info" id="projectInfo"></div>
+ 
+<div id="addSubjectContainer">
+    <input type="text" id="subjectName" placeholder="Enter new subject" />
+    <button id="addBtn">Add Subject</button>
+</div>
+ 
+<table id="subjectTable">
+    <thead>
+        <tr>
+            <th>Subject ID</th>
+            <th>Subject Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+ 
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const projectId = urlParams.get("project_id");
+ 
+// Load project info
+async function loadProjectInfo() {
+    try {
+        const res = await fetch(`/get_project_info?project_id=${projectId}`);
+        const data = await res.json();
+        document.getElementById("projectInfo").innerHTML = `
+            <b>Project ID:</b> ${data.ProjectID} &nbsp;&nbsp;
+            <b>Name:</b> ${data.ProjectName} &nbsp;&nbsp;
+            <b>Client:</b> ${data.ClientName}
+        `;
+    } catch (err) {
+        console.error("Error loading project info:", err);
+    }
+}
+ 
+// Load all subjects for the project
+async function loadSubjects() {
+    try {
+        const res = await fetch(`/get_subjects?project_id=${projectId}`);
+        const subjects = await res.json();
+        const tbody = document.querySelector("#subjectTable tbody");
+        tbody.innerHTML = "";
+ 
+        if (subjects.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3">No subjects found</td></tr>`;
+            return;
+        }
+ 
+        subjects.forEach(s => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${s.SubjectID}</td>
+                <td>${s.SubjectName}</td>
+                <td><button class="delete-btn" onclick="deleteSubject(${s.SubjectID})">Delete</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error("Error loading subjects:", err);
+    }
+}
+ 
+// Add new subject (POST request)
+document.getElementById("addBtn").addEventListener("click", async () => {
+    const subjectName = document.getElementById("subjectName").value.trim();
+    if (!subjectName) return alert("Enter subject name!");
+ 
+    const formData = new FormData();
+    formData.append("ProjectID", projectId);
+    formData.append("SubjectName", subjectName);
+ 
+    try {
+        const res = await fetch("/add_subject", {
+            method: "POST",
+            body: formData
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert("✅ Subject added!");
+            document.getElementById("subjectName").value = "";
+            loadSubjects();
+        } else {
+            alert("❌ " + result.message);
+        }
+    } catch (err) {
+        console.error("Error adding subject:", err);
+        alert("❌ Failed to add subject");
+    }
+});
+ 
+// Delete subject
+async function deleteSubject(id) {
+    if (!confirm("Delete this subject?")) return;
+    try {
+        const res = await fetch(`/delete_subject?subject_id=${id}`, { method: "DELETE" });
+        const result = await res.json();
+        if (result.success) {
+            alert("🗑️ Deleted!");
+            loadSubjects();
+        } else {
+            alert("❌ " + result.message);
+        }
+    } catch (err) {
+        console.error("Error deleting subject:", err);
+        alert("❌ Failed to delete subject");
+    }
+}
+ 
+// Initial load
+loadProjectInfo();
+loadSubjects();
+</script>
+ 
+</body>
+</html>
+ 
+ 
