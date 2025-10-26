@@ -945,58 +945,58 @@ th, td {
 
 <script>
 
-// === Prevent double submissions ===
-window.isAddingTicket = window.isAddingTicket || false;
+// // === Prevent double submissions ===
+// window.isAddingTicket = window.isAddingTicket || false;
 
-// adapt these selectors to your page
-const addTicketForm = document.getElementById('ticketForm') || document.getElementById('addTicketForm');
-const saveTicketBtn = document.getElementById('saveTicketBtn') || document.querySelector('#ticketModal button[type="submit"], #saveTicketBtn, #addTicketButton');
+// // adapt these selectors to your page
+// const addTicketForm = document.getElementById('ticketForm') || document.getElementById('addTicketForm');
+// const saveTicketBtn = document.getElementById('saveTicketBtn') || document.querySelector('#ticketModal button[type="submit"], #saveTicketBtn, #addTicketButton');
 
-if (addTicketForm && saveTicketBtn) {
-  // ensure we only attach once
-  if (!saveTicketBtn.dataset.listenerAttached) {
-    addTicketForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+// if (addTicketForm && saveTicketBtn) {
+//   // ensure we only attach once
+//   if (!saveTicketBtn.dataset.listenerAttached) {
+//     addTicketForm.addEventListener('submit', async (e) => {
+//       e.preventDefault();
 
-      if (window.isAddingTicket) return;          // guard
-      window.isAddingTicket = true;
-      saveTicketBtn.disabled = true;
+//       if (window.isAddingTicket) return;          // guard
+//       window.isAddingTicket = true;
+//       saveTicketBtn.disabled = true;
 
-      try {
-        const formData = new FormData(addTicketForm);
+//       try {
+//         const formData = new FormData(addTicketForm);
 
-        // send add request
-        const resp = await fetch('/add_ticket', {
-          method: 'POST',
-          body: formData
-        });
+//         // send add request
+//         const resp = await fetch('/add_ticket', {
+//           method: 'POST',
+//           body: formData
+//         });
 
-        const result = await resp.json();
-        if (!resp.ok) {
-          alert(result.error || 'Failed to add ticket');
-        } else {
-          // authoritative reload from server
-          if (typeof loadTickets === 'function') {
-            await loadTickets();
-          } else if (typeof loadTicketsFromBackend === 'function') {
-            await loadTicketsFromBackend();
-          } else {
-            // fallback: refresh page
-            location.reload();
-          }
-        }
-      } catch (err) {
-        console.error('Add ticket error', err);
-        alert('Network error while adding ticket');
-      } finally {
-        window.isAddingTicket = false;
-        saveTicketBtn.disabled = false;
-      }
-    });
+//         const result = await resp.json();
+//         if (!resp.ok) {
+//           alert(result.error || 'Failed to add ticket');
+//         } else {
+//           // authoritative reload from server
+//           if (typeof loadTickets === 'function') {
+//             await loadTickets();
+//           } else if (typeof loadTicketsFromBackend === 'function') {
+//             await loadTicketsFromBackend();
+//           } else {
+//             // fallback: refresh page
+//             location.reload();
+//           }
+//         }
+//       } catch (err) {
+//         console.error('Add ticket error', err);
+//         alert('Network error while adding ticket');
+//       } finally {
+//         window.isAddingTicket = false;
+//         saveTicketBtn.disabled = false;
+//       }
+//     });
 
-    saveTicketBtn.dataset.listenerAttached = '1';
-  }
-}
+//     saveTicketBtn.dataset.listenerAttached = '1';
+//   }
+// }
 
   
  
@@ -1611,6 +1611,14 @@ addTicketButton.onclick = async () => {
 
     // ✅ Finally, open the Add Ticket modal
     ticketModal.style.display = "flex";
+
+     // ✅ Auto-fill Date Logged with today’s date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    modalDateLogged.value = `${yyyy}-${mm}-${dd}`;
+
   }
 };
 
