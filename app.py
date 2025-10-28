@@ -800,6 +800,9 @@ def get_tickets():
         selected_streams = (request.args.get("streams") or "").strip()
         selected_streams_list = [s.strip() for s in selected_streams.split(",") if s.strip()]
 
+        # ✅ NEW: capture assigned_to filter
+        assigned_to = (request.args.get("assigned_to") or "").strip()
+
         conn = get_db_connection()
         cur = conn.cursor()
 
@@ -809,6 +812,8 @@ def get_tickets():
                 t.dashboard,
                 t.ticket_no,
                 t.stream,
+                t.ProjectID,
+                p.ProjectName,
                 t.raised_by, 
                 ru.user_name AS raised_by_name,
                 t.assigned_to, 
@@ -823,6 +828,8 @@ def get_tickets():
                 t.comments,
                 t.system_role
             FROM ticket.tickets t
+            LEFT JOIN ticket.Project p
+                ON TRY_CAST(t.ProjectID AS NVARCHAR) = TRY_CAST(p.ProjectID AS NVARCHAR)
             LEFT JOIN ticket.UserProjectMapping ru 
                 ON TRY_CAST(t.raised_by AS NVARCHAR) = TRY_CAST(ru.user_id AS NVARCHAR)
             LEFT JOIN ticket.UserProjectMapping au 
@@ -850,6 +857,11 @@ def get_tickets():
                 placeholders = ",".join("?" * len(selected_streams_list))
                 where_clauses.append(f"t.stream IN ({placeholders})")
                 params.extend(selected_streams_list)
+
+        # ✅ NEW: filter by assigned user if provided
+        if assigned_to:
+            where_clauses.append("(TRY_CAST(t.assigned_to AS NVARCHAR) = ? OR au.user_name = ?)")
+            params.extend([assigned_to, assigned_to])
 
         query = base_select
         if where_clauses:
@@ -891,19 +903,21 @@ def get_tickets():
                 "dashboard": None if user_role == "SAH" else (row[1] or ""),
                 "ticket_no": row[2] or "",
                 "stream": row[3] or "",
-                "raised_by_id": row[4] or "",
-                "raised_by": row[5] or row[4] or "",
-                "assigned_to_id": row[6] or "",
-                "assigned_to": row[7] or row[6] or "",
-                "subject": row[8] or "",
-                "date_logged": fmt_date(row[9]),
-                "closed_date": fmt_date(row[10]),
-                "priority": row[11] or "",
-                "status": (row[12].strip() if row[12] else ""),
-                "description": row[13] or "",
-                "attachment": f"/static/uploads/{row[14]}" if row[14] else None,
-                "comments": row[15] or "",
-                "system_role": row[16] or ""
+                "project_id": row[4] or "",
+                "project_name": row[5] or "",
+                "raised_by_id": row[6] or "",
+                "raised_by": row[7] or row[6] or "",
+                "assigned_to_id": row[8] or "",
+                "assigned_to": row[9] or row[8] or "",
+                "subject": row[10] or "",
+                "date_logged": fmt_date(row[11]),
+                "closed_date": fmt_date(row[12]),
+                "priority": row[13] or "",
+                "status": (row[14].strip() if row[14] else ""),
+                "description": row[15] or "",
+                "attachment": f"/static/uploads/{row[16]}" if row[16] else None,
+                "comments": row[17] or "",
+                "system_role": row[18] or ""
             })
 
         print(f"🎯 TICKETS FETCHED FOR CLIENT_ID={client_id}, ROLE={user_role} | COUNT: {len(tickets)}")
@@ -912,6 +926,7 @@ def get_tickets():
     except Exception as e:
         traceback.print_exc()
         return jsonify([]), 500
+
 
 
 
@@ -964,16 +979,33 @@ def get_dropdown_data():
         if not client_id:
             return jsonify({"error": "Missing client_id"}), 400
 
+        # ✅ Optional project filter
+        project_id = request.args.get("project_id")
+        assigned_to = request.args.get("assigned_to")
+
+
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # ✅ Streams for this client
-        cur.execute("""
-            SELECT DISTINCT Stream
-            FROM ticket.tickets
-            WHERE ClientID = ? AND Stream IS NOT NULL
-            ORDER BY Stream
-        """, (client_id,))
+        if assigned_to:
+            where_clauses.append("t.assigned_to = ?")
+            params.append(assigned_to)
+
+        # ✅ Streams for this client (filtered by project if provided)
+        if project_id:
+            cur.execute("""
+                SELECT DISTINCT Stream
+                FROM ticket.tickets
+                WHERE ClientID = ? AND ProjectID = ? AND Stream IS NOT NULL
+                ORDER BY Stream
+            """, (client_id, project_id))
+        else:
+            cur.execute("""
+                SELECT DISTINCT Stream
+                FROM ticket.tickets
+                WHERE ClientID = ? AND Stream IS NOT NULL
+                ORDER BY Stream
+            """, (client_id,))
         streams = [{"id": i + 1, "name": row[0]} for i, row in enumerate(cur.fetchall())]
 
         # ✅ Statuses for this client
@@ -1007,6 +1039,7 @@ def get_dropdown_data():
         traceback.print_exc()
         logging.exception("Error fetching client-wise dropdown data")
         return jsonify({"error": str(e)}), 500
+
 
 
  # Login
@@ -1392,15 +1425,39 @@ def get_users():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT id, name, email, status FROM ticket.saait_users")
+        cur.execute("""
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.status,
+                c.ClientName,
+                p.ProjectName
+            FROM ticket.saait_users u
+            LEFT JOIN ticket.Client c ON u.client_id = c.ClientID
+            LEFT JOIN ticket.Project p ON u.project_id = p.ProjectID
+        """)
         rows = cur.fetchall()
         cur.close()
         conn.close()
 
-        users = [{"id": r[0], "name": r[1], "email": r[2], "status": r[3]} for r in rows]
+        users = []
+        for r in rows:
+            users.append({
+                "id": r[0],
+                "name": r[1],
+                "email": r[2],
+                "status": r[3],
+                "client_name": r[4] or "-",
+                "project_name": r[5] or "-"
+            })
+
         return jsonify(users)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 
 # ✅ Add new user with client and project mapping
@@ -1631,11 +1688,14 @@ def get_project():
 @app.route('/getprojectusers', methods=['GET'])
 def getprojectusers():
     projectid = request.args.get('projectid')
+    client_id = request.args.get('client_id')  # ✅ client-based filtering
+    stream_name = request.args.get('stream')   # ✅ stream-based filtering
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        # --- Base: Always show all users mapped to the project/client ---
         if projectid:
-            cursor.execute("""
+            base_query = """
                 SELECT DISTINCT 
                     upm.user_id   AS userid,
                     upm.user_name AS username,
@@ -1645,8 +1705,67 @@ def getprojectusers():
                 INNER JOIN ticket.saait_users su
                     ON TRY_CAST(upm.user_id AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
                 WHERE upm.project_id = ? AND su.status = 'Active'
-            """, (projectid,))
+            """
+            params = [projectid]
+
+            # --- If stream given, prioritize users who have tickets in that stream ---
+            if stream_name:
+                stream_query = """
+                    SELECT DISTINCT 
+                        su.id AS userid
+                    FROM ticket.tickets t
+                    INNER JOIN ticket.saait_users su
+                        ON TRY_CAST(t.assigned_to AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
+                    WHERE TRY_CAST(t.ProjectID AS NVARCHAR) = ?
+                      AND t.ClientID = ?
+                      AND t.stream = ?
+                      AND su.status = 'Active'
+                """
+                cursor.execute(stream_query, (projectid, client_id, stream_name))
+                stream_user_ids = [str(r[0]) for r in cursor.fetchall()]
+                if stream_user_ids:
+                    # Only include users from both mapping and ticket
+                    placeholders = ",".join("?" * len(stream_user_ids))
+                    base_query += f" AND TRY_CAST(upm.user_id AS NVARCHAR) IN ({placeholders})"
+                    params.extend(stream_user_ids)
+
+            cursor.execute(base_query, tuple(params))
+
+        elif client_id:
+            base_query = """
+                SELECT DISTINCT 
+                    upm.user_id   AS userid,
+                    upm.user_name AS username,
+                    su.is_raisedby_flag,
+                    su.can_be_raised
+                FROM ticket.UserProjectMapping upm
+                INNER JOIN ticket.saait_users su
+                    ON TRY_CAST(upm.user_id AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
+                WHERE upm.client_id = ? AND su.status = 'Active'
+            """
+            params = [client_id]
+
+            if stream_name:
+                stream_query = """
+                    SELECT DISTINCT 
+                        su.id AS userid
+                    FROM ticket.tickets t
+                    INNER JOIN ticket.saait_users su
+                        ON TRY_CAST(t.assigned_to AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
+                    WHERE t.ClientID = ?
+                      AND t.stream = ?
+                      AND su.status = 'Active'
+                """
+                cursor.execute(stream_query, (client_id, stream_name))
+                stream_user_ids = [str(r[0]) for r in cursor.fetchall()]
+                if stream_user_ids:
+                    placeholders = ",".join("?" * len(stream_user_ids))
+                    base_query += f" AND TRY_CAST(upm.user_id AS NVARCHAR) IN ({placeholders})"
+                    params.extend(stream_user_ids)
+
+            cursor.execute(base_query, tuple(params))
         else:
+            # --- Fallback: all active users ---
             cursor.execute("""
                 SELECT DISTINCT 
                     upm.user_id   AS userid,
@@ -1662,17 +1781,37 @@ def getprojectusers():
         rows = cursor.fetchall()
         users = []
         for r in rows:
-            userid = r[0]
-            username = r[1]
-            is_raisedby_flag = r[2]
-            can_be_raised = r[3]
-
+            userid, username, is_raisedby_flag, can_be_raised = r
             users.append({
-                "userid": str(userid) if userid is not None else "",
+                "userid": str(userid) if userid else "",
                 "username": username or "",
                 "isRaisedBy": 1 if (is_raisedby_flag in (1, True)) else 0,
                 "isAssignedTo": 1 if (can_be_raised in (1, True)) else 0
             })
+
+        # ✅ If still no users (no mapping, no tickets), try fallback from tickets table
+        if not users and projectid:
+            cursor.execute("""
+                SELECT DISTINCT 
+                    su.id AS userid,
+                    su.user_name AS username,
+                    su.is_raisedby_flag,
+                    su.can_be_raised
+                FROM ticket.tickets t
+                INNER JOIN ticket.saait_users su
+                    ON TRY_CAST(t.assigned_to AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
+                WHERE TRY_CAST(t.ProjectID AS NVARCHAR) = ?
+                  AND su.status = 'Active'
+            """, (projectid,))
+            rows = cursor.fetchall()
+            for r in rows:
+                userid, username, is_raisedby_flag, can_be_raised = r
+                users.append({
+                    "userid": str(userid) if userid else "",
+                    "username": username or "",
+                    "isRaisedBy": 1 if (is_raisedby_flag in (1, True)) else 0,
+                    "isAssignedTo": 1 if (can_be_raised in (1, True)) else 0
+                })
 
         return jsonify(users)
     except Exception as e:
@@ -1681,6 +1820,10 @@ def getprojectusers():
     finally:
         cursor.close()
         conn.close()
+
+
+
+
 
  
 

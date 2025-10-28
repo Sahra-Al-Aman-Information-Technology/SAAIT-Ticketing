@@ -251,24 +251,51 @@
   <header>User Management</header>
 
   <div class="container">
-    <div class="toolbar">
-     <button class="btn btn-secondary" onclick="window.location.href='/Saait.html'">← Back</button>
-<button class="btn btn-success" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
+    <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+  <!-- Left: Back Button -->
+  <div style="display:flex; align-items:center; gap:10px;">
+    <button class="btn btn-secondary" onclick="window.location.href='/Saait.html'">← Back</button>
+  </div>
 
+  <!-- Center: Filters -->
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <label style="font-weight:500;"><b>Client:</b></label>
+    <select id="filterClient" style="padding:8px; border-radius:6px; border:1px solid #ccc; min-width:150px;">
+      <option value="">All Clients</option>
+    </select>
 
-    </div>
+    <label style="font-weight:500;"><b>Project:</b></label>
+    <select id="filterProject" style="padding:8px; border-radius:6px; border:1px solid #ccc; min-width:150px;">
+      <option value="">All Projects</option>
+    </select>
+
+    <!-- Clear icon -->
+    <button id="clearFiltersBtn" class="btn btn-danger" style="padding:6px 10px;">❌ Clear</button>
+  </div>
+
+  <!-- Right: Add User -->
+  <div>
+    <button class="btn btn-success" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
+  </div>
+</div>
+
+<!-- </div> -->
+
 
     <table>
       <thead>
-        <tr>
-          <th>Id</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="userTable"></tbody>
+  <tr>
+    <th>Id</th>
+    <th>Client</th>
+    <th>Project</th>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+</thead>
+<tbody id="userTable"></tbody>
+
     </table>
   </div>
 
@@ -335,19 +362,21 @@
       const tbody = document.getElementById('userTable');
       tbody.innerHTML = '';
       users.forEach((u, idx) => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${idx+1}</td>
-            <td>${u.name}</td>
-            <td>${u.email}</td>
-            <td>${u.status}</td>
-            <td>
-              <button class="btn btn-danger" onclick="deleteUser(${u.id})">Delete</button>
+  tbody.innerHTML += `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${u.client_name || '-'}</td>
+      <td>${u.project_name || '-'}</td>
+      <td>${u.name}</td>
+      <td>${u.email}</td>
+      <td>${u.status}</td>
+      <td>
+        <button class="btn btn-danger" onclick="deleteUser(${u.id})">Delete</button>
+      </td>
+    </tr>
+  `;
+});
 
-            </td>
-          </tr>
-        `;
-      });
     }
 
    async function addUser() {
@@ -529,6 +558,124 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     window.onload = loadUsers;
+
+// ------------------ FILTER LOGIC ------------------
+
+// ------------------ FILTER LOGIC ------------------
+
+// Load clients for dropdown
+async function loadFilterClients() {
+  try {
+    const res = await fetch('/get_clients');
+    const clients = await res.json();
+    const clientDropdown = document.getElementById('filterClient');
+    clientDropdown.innerHTML = '<option value="">All Clients</option>';
+    clients.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.ClientID;
+      opt.textContent = c.ClientName;
+      clientDropdown.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load clients for filter:', err);
+  }
+}
+
+// Load projects linked to selected client
+async function loadFilterProjects(clientId) {
+  const projectDropdown = document.getElementById('filterProject');
+  if (!clientId) {
+    projectDropdown.innerHTML = '<option value="">All Projects</option>';
+    return;
+  }
+  try {
+    const res = await fetch(`/getprojectsbyclient?clientid=${encodeURIComponent(clientId)}`);
+    const projects = await res.json();
+    projectDropdown.innerHTML = '<option value="">All Projects</option>';
+    if (Array.isArray(projects)) {
+      projects.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        projectDropdown.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load projects for filter:', err);
+  }
+}
+
+// Fetch and filter users
+async function filterUsers() {
+  const clientId = document.getElementById('filterClient').value;
+  const projectId = document.getElementById('filterProject').value;
+  const res = await fetch('/saait_users');
+  const users = await res.json();
+
+  const filtered = users.filter(u => {
+    const matchClient = !clientId || u.client_name === getClientName(clientId);
+    const matchProject = !projectId || u.project_name === getProjectName(projectId);
+    return matchClient && matchProject;
+  });
+  renderUsers(filtered);
+}
+
+// Helpers to get selected dropdown text
+function getClientName(id) {
+  const opt = document.querySelector(`#filterClient option[value='${id}']`);
+  return opt ? opt.textContent : '';
+}
+function getProjectName(id) {
+  const opt = document.querySelector(`#filterProject option[value='${id}']`);
+  return opt ? opt.textContent : '';
+}
+
+// Clear all filters
+function clearFilters() {
+  document.getElementById('filterClient').value = '';
+  document.getElementById('filterProject').innerHTML = '<option value="">All Projects</option>';
+  loadUsers();
+}
+
+// Reusable table renderer
+function renderUsers(users) {
+  const tbody = document.getElementById('userTable');
+  tbody.innerHTML = '';
+  users.forEach((u, idx) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${u.client_name || '-'}</td>
+        <td>${u.project_name || '-'}</td>
+        <td>${u.name}</td>
+        <td>${u.email}</td>
+        <td>${u.status}</td>
+        <td><button class="btn btn-danger" onclick="deleteUser(${u.id})">Delete</button></td>
+      </tr>`;
+  });
+}
+
+// Modify loadUsers() to reuse renderUsers()
+async function loadUsers() {
+  const res = await fetch('/saait_users');
+  const users = await res.json();
+  renderUsers(users);
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  loadFilterClients();
+
+  document.getElementById('filterClient').addEventListener('change', async (e) => {
+    await loadFilterProjects(e.target.value);
+    filterUsers();
+  });
+
+  document.getElementById('filterProject').addEventListener('change', filterUsers);
+  document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+});
+
+
   </script>
 </body>
 </html>

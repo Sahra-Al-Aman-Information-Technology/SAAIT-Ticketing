@@ -81,13 +81,13 @@ footer {
       position: relative;
     }
     .badge {
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 12px;
       color: white;
       font-weight: bold;
       font-size: 0.9em;
       display: inline-block;
-      min-width: 60px;
+      min-width: 50px;
     }
  
      /* 🎯 PRIORITY BADGES */
@@ -522,7 +522,7 @@ button:hover,
 /* Narrow the View column */
 th.view-header,
 td.view-cell {
-  width: 60px;            /* fixed narrow width */
+  width: 50px;            /* fixed narrow width */
   text-align: center;
 }
  
@@ -583,6 +583,13 @@ th, td {
 
   color: black;             /* Black text for visibility */
 
+}
+
+/* ✅ Hide Add Ticket modal by default to prevent flicker */
+#addTicketModal {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
 }
 
  
@@ -755,13 +762,16 @@ th, td {
   <option value="">All</option>
 </select>
 
+<label for="projectFilter" style="font-size: small;">Project :</label>
+<select id="projectFilter" style="font-size: small;">
+  <option value="">All</option>
+</select>
+
 
 <label for="streamFilter" style="font-size: small;">Stream :</label>
 <select id="streamFilter" style="font-size: small;">
   <option value="">Streams</option>
 </select>
-
-
 
 
 
@@ -774,6 +784,14 @@ th, td {
 <option value="Medium">Medium</option>
 <option value="High">High</option>
 </select>
+
+    <label for="assignedToFilter" style="font-size: small;">Assigned To :</label>
+    <select id="assignedToFilter" style="font-size: small;">
+      <option value="">All</option>
+    </select>
+
+
+
  
     <label for="monthFilter" style="font-size: small;">Month:</label>
 <select id="monthFilter" style="font-size: small;">
@@ -824,6 +842,7 @@ th, td {
   <thead>
     <tr>
       <th class="ticket-no-header">Ticket No</th>
+      <th class="project-header">Project</th> 
       <th class="stream-header">Stream</th>
       <th id="tableDashboardHeader">Stream 2</th>
       <th class="raised-by-header">Raised By</th>
@@ -858,7 +877,7 @@ th, td {
     <form id="ticketForm">
 
       <label for="modalProject">Project</label>
-<select id="modalProject" required>
+<select id="modalProject" name="project_id" required>
   <option value="">Select Project</option>
 </select>
       <label id="modalStreamLabel">Stream</label>
@@ -999,7 +1018,14 @@ th, td {
 // }
 
   
+// ✅ Hide Add Ticket Modal immediately on load
+document.addEventListener("DOMContentLoaded", () => {
+  const addModal = document.getElementById("addTicketModal");
+  if (addModal) addModal.style.display = "none";
+});
  
+
+
  function formatDate(dateStr) {
   if (!dateStr || dateStr === 'null') return '';
   const parts = dateStr.split('-'); // "YYYY-MM-DD"
@@ -1052,6 +1078,8 @@ let editingIndex = -1;
   const customAssignedTo = document.getElementById('customAssignedTo'); // ✅ FIXED
   const customStream = document.getElementById("customStream");       // ✅ FIXED
   const customDashboard = document.getElementById("customDashboard"); // fixed
+  const projectFilter = document.getElementById('projectFilter');       // ✅ NEW
+  const assignedToFilter = document.getElementById('assignedToFilter');
   const statusFilter = document.getElementById('statusFilter');
   const streamFilter = document.getElementById('streamFilter');
   const priorityFilter = document.getElementById('priorityFilter');
@@ -1096,6 +1124,8 @@ modalStatus.addEventListener("change", () => {
 // Save current filters into sessionStorage
 function saveFilters() {
   try {
+    sessionStorage.setItem("projectFilter", projectFilter?.value || "");
+    sessionStorage.setItem("assignedToFilter", assignedToFilter?.value || "");  // NEW
     sessionStorage.setItem("statusFilter", statusFilter?.value || "");
     sessionStorage.setItem("streamFilter", streamFilter?.value || "");
     sessionStorage.setItem("priorityFilter", priorityFilter?.value || "");
@@ -1107,15 +1137,30 @@ function saveFilters() {
   }
 }
 
+
 // Return selected streams as an array for backend calls
 function getSelectedStreams() {
   if (!streamFilter) return [];
   return streamFilter.value ? [streamFilter.value] : [];
 }
 
-// Restore filters from sessionStorage (safe about stream options not yet populated)
+// Restore filters from sessionStorage (safe about async dropdown loads)
 function restoreFilters() {
   try {
+    const pjtVal = sessionStorage.getItem("projectFilter");
+    if (pjtVal !== null && projectFilter) {
+      // wait for project dropdown to populate
+      if ([...projectFilter.options].some(o => o.value === pjtVal)) {
+        projectFilter.value = pjtVal;
+      } else {
+        setTimeout(() => {
+          if ([...projectFilter.options].some(o => o.value === pjtVal)) {
+            projectFilter.value = pjtVal;
+          }
+        }, 300);
+      }
+    }
+
     const sVal = sessionStorage.getItem("statusFilter");
     if (sVal !== null && statusFilter) statusFilter.value = sVal;
 
@@ -1128,11 +1173,9 @@ function restoreFilters() {
     // Stream: may require waiting until options are populated
     const storedStream = sessionStorage.getItem("streamFilter");
     if (storedStream !== null && streamFilter) {
-      // If option exists now, set immediately
       if ([...streamFilter.options].some(o => o.value === storedStream)) {
         streamFilter.value = storedStream;
       } else {
-        // try again shortly after (populateStreamFilter is async)
         setTimeout(() => {
           if ([...streamFilter.options].some(o => o.value === storedStream)) {
             streamFilter.value = storedStream;
@@ -1140,6 +1183,22 @@ function restoreFilters() {
         }, 250);
       }
     }
+
+        // Restore assignedTo (may require project-specific options to be loaded first)
+    const storedAssigned = sessionStorage.getItem("assignedToFilter");
+    if (storedAssigned !== null && assignedToFilter) {
+      // try immediate set; if options not populated yet, try after a short delay
+      if ([...assignedToFilter.options].some(o => o.value === storedAssigned)) {
+        assignedToFilter.value = storedAssigned;
+      } else {
+        setTimeout(() => {
+          if ([...assignedToFilter.options].some(o => o.value === storedAssigned)) {
+            assignedToFilter.value = storedAssigned;
+          }
+        }, 350);
+      }
+    }
+
 
     // Source slicer
     const slicerEl = document.getElementById("sourceSlicer");
@@ -1151,20 +1210,89 @@ function restoreFilters() {
   }
 }
 
-// Attach change handlers that save state and update UI/backend
+// ===== Attach change handlers that save state and update backend =====
 statusFilter.addEventListener("change", () => { saveFilters(); renderTickets(); });
 priorityFilter.addEventListener("change", () => { saveFilters(); renderTickets(); });
 monthFilter.addEventListener("change", () => { saveFilters(); renderTickets(); });
 
-// streamFilter -> will fetch backend filtered data (and also re-render)
-streamFilter.addEventListener("change", () => {
+// ✅ NEW: Project filter change -> backend refresh
+projectFilter.addEventListener("change", async () => {
   saveFilters();
+  const clientId = sessionStorage.getItem("client_id");
+  if (clientId) await loadClientWiseDropdowns(clientId);  // 🔥 Refresh streams for selected project
+
   const slicerEl = document.getElementById("sourceSlicer");
   const source = slicerEl ? slicerEl.value : "";
   loadTicketsFromBackend(source, getSelectedStreams());
 });
 
-// sourceSlicer (if present) -> fetch backend
+// Stream filter change -> backend refresh
+if (streamFilter) {
+  streamFilter.addEventListener("change", async () => {
+    saveFilters();
+
+    const clientId = sessionStorage.getItem("client_id");
+    const selectedProject = document.getElementById("projectFilter")?.value || "";
+    const selectedStream = streamFilter.value || "";
+
+    // ✅ Only reload the Assigned To filter (not all dropdowns)
+    try {
+      const assignedToFilter = document.getElementById("assignedToFilter");
+      if (assignedToFilter) assignedToFilter.innerHTML = `<option value="">All</option>`;
+
+      let url = `/getprojectusers?client_id=${encodeURIComponent(clientId)}`;
+if (selectedProject) url += `&projectid=${encodeURIComponent(selectedProject)}`;
+if (selectedStream) url += `&stream=${encodeURIComponent(selectedStream)}`;
+
+      const res = await fetch(url);
+      const users = await res.json();
+
+      // 🔹 Filter to show only users who can be assigned (isAssignedTo === 1)
+      const assignedUsers = Array.isArray(users)
+        ? users.filter(u => u.isAssignedTo === 1)
+        : [];
+
+      // 🔹 Optionally also narrow further by stream if applicable
+      const finalUsers = selectedStream
+        ? assignedUsers.filter(u =>
+            !u.stream_name || u.stream_name === selectedStream
+          )
+        : assignedUsers;
+
+      if (finalUsers.length) {
+        finalUsers.forEach(u => {
+          const opt = document.createElement("option");
+          opt.value = String(u.userid || u.user_id);
+          opt.textContent = u.username || u.user_name;
+          assignedToFilter.appendChild(opt);
+        });
+      } else {
+        console.warn("⚠️ No assigned users found for this project/stream.");
+      }
+    } catch (err) {
+      console.error("❌ Error updating Assigned To filter:", err);
+    }
+
+    // ✅ Then reload tickets normally
+    const src = slicer ? slicer.value : "";
+    loadTicketsFromBackend(src, getSelectedStreams());
+  });
+}
+
+
+
+// assignedToFilter -> fetch backend filtered data (and also re-render)
+if (assignedToFilter) {
+  assignedToFilter.addEventListener("change", () => {
+    saveFilters();
+    const slicerEl = document.getElementById("sourceSlicer");
+    const source = slicerEl ? slicerEl.value : "";
+    loadTicketsFromBackend(source, getSelectedStreams());
+  });
+}
+
+
+// Source slicer (if present)
 const sourceSlicerEl = document.getElementById("sourceSlicer");
 if (sourceSlicerEl) {
   sourceSlicerEl.addEventListener("change", () => {
@@ -1176,25 +1304,32 @@ if (sourceSlicerEl) {
 // ✅ Clear Filters Button Logic
 document.getElementById('clearFiltersBtn').onclick = () => {
   // reset UI
+  projectFilter.value = '';
   statusFilter.value = '';
   streamFilter.value = '';
   priorityFilter.value = '';
   monthFilter.value = '';
+  assignedToFilter.value = '';
+  
+
 
   const slicer = document.getElementById('sourceSlicer');
   if (slicer) slicer.value = '';
 
   // clear saved state
+  sessionStorage.removeItem("projectFilter");
+  sessionStorage.removeItem("assignedToFilter");
   sessionStorage.removeItem("statusFilter");
   sessionStorage.removeItem("streamFilter");
   sessionStorage.removeItem("priorityFilter");
   sessionStorage.removeItem("monthFilter");
   sessionStorage.removeItem("sourceSlicer");
 
-  // reload tickets (use current slicer if present)
+  // reload tickets
   const source = slicer ? slicer.value : "";
   loadTicketsFromBackend(source, getSelectedStreams());
 };
+
 
 // Load all projects from backend
 // Load projects for a selected client
@@ -2804,6 +2939,8 @@ function renderTickets() {
   console.log(`✅ Unique tickets to render: ${uniqueTickets.length}`);
 
   // Read filter values
+  const projectVal = projectFilter?.value || '';
+  const assignedVal = assignedToFilter?.value || '';
   const statusVal = statusFilter.value;
   const streamVal = streamFilter.value;
   const priorityVal = priorityFilter.value;
@@ -2874,29 +3011,49 @@ function renderTickets() {
     return digits ? parseInt(digits, 10) : 0;
   }
 
-  const statusOrder = (currentRole === "TLC" || currentRole === "SAH") ? {
-    'open': 1,
-    'in-progress': 2,
-    'on-hold': 3,
-    'closed': 4
-  } : {
-    'open': 1,
-    'in-progress': 2,
-    'on-hold-arm-team': 3,
-    'on-hold-saait-team': 3,
-    'closed': 4
-  };
+  const statusOrder =
+    currentRole === "TLC" || currentRole === "SAH"
+      ? { open: 1, "in-progress": 2, "on-hold": 3, closed: 4 }
+      : {
+          open: 1,
+          "in-progress": 2,
+          "on-hold-arm-team": 3,
+          "on-hold-saait-team": 3,
+          closed: 4,
+        };
 
   // ✅ Step 3: Filter and sort tickets
   uniqueTickets
     .map((ticket, i) => ({ ticket, originalIndex: i }))
     .filter(({ ticket }) => {
       const norm = s => (s || '').toLowerCase().replace(/\(|\)/g, '').replace(/\s+/g, ' ').trim();
+
+      const matchProject =
+        !projectVal ||
+        (ticket.project_id && String(ticket.project_id) === projectVal) ||
+        (ticket.stream && ticket.stream === projectVal);
+
       const matchStatus = !statusVal || norm(ticket.status) === norm(statusVal);
       const matchStream = !streamVal || ticket.stream === streamVal;
       const matchPriority = !priorityVal || ticket.priority === priorityVal;
+
+      const matchAssigned =
+        !assignedVal ||
+        (ticket.assigned_to_id && String(ticket.assigned_to_id) === assignedVal) ||
+        (ticket.assigned_to && String(ticket.assigned_to) === assignedVal) ||
+        (ticket.assigned_to_name && ticket.assigned_to_name === assignedVal);
+
       const dateLoggedMonth = extractMonth(ticket.date_logged);
-      return matchStatus && matchStream && matchPriority && (!selectedMonth || dateLoggedMonth === selectedMonth);
+
+      // ✅ FIXED: include matchAssigned in final filter condition
+      return (
+        matchProject &&
+        matchStatus &&
+        matchStream &&
+        matchPriority &&
+        matchAssigned &&
+        (!selectedMonth || dateLoggedMonth === selectedMonth)
+      );
     })
     .sort((a, b) => {
       const aKey = normalizeStatusForRole(a.ticket.status);
@@ -2919,8 +3076,9 @@ function renderTickets() {
           <small class="status-${ticket.status.toLowerCase().replace(/ /g, '-')}">${ticket.status}</small><br>
           <button class="small-view-btn" onclick="openViewPage(${originalIndex})">View</button>
         </td>
+        <td class="project-cell">${ticket.project_name || ticket.project_id || '-'}</td>
         ${role === 'SAH'
-          ? `<td class="project-cell">${ticket.stream}</td>`
+          ? `<td class="stream-cell">${ticket.stream}</td>`
           : `<td class="stream-cell">${ticket.stream}</td><td>${ticket.dashboard}</td>`
         }
         <td class="raised-by-cell">${ticket.raised_by_name || ticket.raised_by}</td>
@@ -2936,12 +3094,14 @@ function renderTickets() {
         <td>
           <div class="status-tooltip">
             <span class="badge ${
-              isStaleTicket(ticket) ? 'stale' :
-              (ticket.status || '').toLowerCase()
-                .replace(/\(/g, ' ')
-                .replace(/\)/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/--+/g, '-')
+              isStaleTicket(ticket)
+                ? 'stale'
+                : (ticket.status || '')
+                    .toLowerCase()
+                    .replace(/\(/g, ' ')
+                    .replace(/\)/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/--+/g, '-')
             }">
               ${ticket.status || '-'}
             </span>
@@ -2965,9 +3125,9 @@ function renderTickets() {
             if (!history || history.length === 0) {
               tooltip.textContent = "No history available";
             } else {
-              tooltip.textContent = history.map(
-                h => `[${h.changed_at}] ${h.old_value || '—'} → ${h.new_value}`
-              ).join("\n");
+              tooltip.textContent = history
+                .map(h => `[${h.changed_at}] ${h.old_value || '—'} → ${h.new_value}`)
+                .join("\n");
             }
             tooltip.setAttribute("data-loaded", "true");
           })
@@ -2982,6 +3142,8 @@ function renderTickets() {
 
   console.log("✅ Tickets rendered successfully:", uniqueTickets.length);
 }
+
+
 
 
 
@@ -3004,25 +3166,33 @@ async function loadTicketsFromBackend(source = '', streams = []) {
       else if (userRole === "SAAIT") computedSource = "";
     }
 
-    // === 3️⃣ Build request URL
+    // === 3️⃣ Collect filter values
+    const projectVal = document.getElementById("projectFilter")?.value || "";
+    const streamVal = document.getElementById("streamFilter")?.value || "";   // ✅ NEW
+    const assignedVal = document.getElementById("assignedToFilter")?.value || "";
+
+    // === 4️⃣ Build request URL
     let url = '/get_tickets';
     const params = [];
     if (computedSource) params.push(`source=${encodeURIComponent(computedSource)}`);
     if (streams?.length) params.push(`streams=${encodeURIComponent(streams.join(","))}`);
     if (clientId) params.push(`client_id=${encodeURIComponent(clientId)}`);
+    if (projectVal) params.push(`project_id=${encodeURIComponent(projectVal)}`);
+    if (streamVal) params.push(`streams=${encodeURIComponent(streamVal)}`);   // ✅ ensure single-stream case
+    if (assignedVal) params.push(`assigned_to=${encodeURIComponent(assignedVal)}`); // ✅ added assigned_to filter
     if (params.length) url += "?" + params.join("&");
 
     console.log("🔎 Fetching tickets from:", url);
 
-    // === 4️⃣ Fetch from backend
+    // === 5️⃣ Fetch from backend
     const res = await fetch(url);
     const data = await res.json();
 
-    // === 5️⃣ Validate and normalize
+    // === 6️⃣ Validate and normalize
     if (!Array.isArray(data)) {
       console.error("❌ Expected array, got:", data);
       tickets = [];
-      renderTickets([]); // pass empty
+      renderTickets([]);
       return [];
     }
 
@@ -3032,19 +3202,25 @@ async function loadTicketsFromBackend(source = '', streams = []) {
       dashboard: t.dashboard ?? '',
       ticket_no: t.ticket_no ?? '',
       stream: t.stream ?? '',
+      project_id: t.project_id ?? t.ProjectID ?? '',
+      project_name: t.project_name ?? t.ProjectName ?? '',
       raised_by: t.raised_by ?? '',
+      raised_by_id: t.raised_by_id ?? '',
+      raised_by_name: t.raised_by_name ?? '',
+      assigned_to: t.assigned_to ?? '',
+      assigned_to_id: t.assigned_to_id ?? '',
+      assigned_to_name: t.assigned_to_name ?? '',
       subject: t.subject ?? '',
       date_logged: t.date_logged ?? '',
       closed_date: t.closed_date ?? '',
       priority: t.priority ?? '',
       status: t.status ?? '',
-      assigned_to: t.assigned_to ?? '',
       description: t.description ?? '',
       comments: t.comments ?? '',
       attachment: t.attachment ?? ''
     }));
 
-    // === 6️⃣ Deduplicate by unique id/ticket_no
+    // === 7️⃣ Deduplicate by unique id/ticket_no
     const seen = new Set();
     normalized = normalized.filter(t => {
       const key = t.id || t.ticket_no;
@@ -3053,7 +3229,7 @@ async function loadTicketsFromBackend(source = '', streams = []) {
       return true;
     });
 
-    // === 7️⃣ Update global and render
+    // === 8️⃣ Update global and render
     tickets = normalized;
     renderTickets(tickets);
 
@@ -3068,13 +3244,47 @@ async function loadTicketsFromBackend(source = '', streams = []) {
   }
 }
 
+
 async function loadClientWiseDropdowns(clientId) {
   try {
-    const res = await fetch(`/get_dropdown_data?client_id=${encodeURIComponent(clientId)}`);
+    // ✅ Save currently selected project to reselect later
+    const projectSelect = document.getElementById("projectFilter");
+    const previouslySelectedProject = projectSelect?.value || "";
+
+    // ✅ 1️⃣ Load Projects first
+    const projectRes = await fetch(`/get_projects_by_client?client_id=${encodeURIComponent(clientId)}`);
+    const projectData = await projectRes.json();
+
+    if (projectSelect) {
+      projectSelect.innerHTML = `<option value="">All</option>`;
+      projectData.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name;
+        projectSelect.appendChild(opt);
+      });
+
+      // ✅ Reselect previously chosen project if it still exists
+      if (
+        previouslySelectedProject &&
+        [...projectSelect.options].some(o => o.value === previouslySelectedProject)
+      ) {
+        projectSelect.value = previouslySelectedProject;
+      }
+    }
+
+    // ✅ 2️⃣ Get selected project (if any)
+    const selectedProject = projectSelect?.value || "";
+
+    // ✅ 3️⃣ Fetch dropdown data (streams, statuses, priorities)
+    let dropdownUrl = `/get_dropdown_data?client_id=${encodeURIComponent(clientId)}`;
+    if (selectedProject) dropdownUrl += `&project_id=${encodeURIComponent(selectedProject)}`;
+
+    const res = await fetch(dropdownUrl);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to fetch dropdown data");
 
-    // Populate Stream Filter
+    // Populate Stream Filter (filtered by project if selected)
     const streamSelect = document.getElementById("streamFilter");
     streamSelect.innerHTML = `<option value="">All</option>`;
     data.streams.forEach(s => {
@@ -3104,10 +3314,53 @@ async function loadClientWiseDropdowns(clientId) {
       prioritySelect.appendChild(opt);
     });
 
+    // ===== ✅ Populate Assigned To filter based on selected project =====
+    
+const assignedToFilter = document.getElementById("assignedToFilter");
+if (assignedToFilter) assignedToFilter.innerHTML = `<option value="">All</option>`;
+
+try {
+  let url = "/getprojectusers";
+  if (selectedProject) url += `?projectid=${encodeURIComponent(selectedProject)}`;
+  else if (clientId) url += `?client_id=${encodeURIComponent(clientId)}`;
+
+  console.log("📡 Fetching assigned-to users from:", url);
+  const resUsers = await fetch(url);
+  const users = await resUsers.json();
+
+  if (Array.isArray(users)) {
+    const assignedOnly = users.filter(u => u.isAssignedTo === 1 || u.can_be_raised === 1);
+    assignedOnly.forEach(u => {
+      const opt = document.createElement("option");
+      opt.value = String(u.userid);
+      opt.textContent = u.username;
+      assignedToFilter.appendChild(opt);
+    });
+  
+
+    const storedAssigned = sessionStorage.getItem("assignedToFilter");
+    if (storedAssigned && [...assignedToFilter.options].some(o => o.value === storedAssigned)) {
+      assignedToFilter.value = storedAssigned;
+    }
+  } else {
+    console.warn("⚠️ No assigned-to users found for project/stream/client");
+  }
+
+} catch (err) {
+  console.error("❌ Failed to load assigned-to users:", err);
+}
+
+
+
+
   } catch (err) {
     console.error("❌ Error loading client-wise dropdowns:", err);
   }
 }
+
+
+
+
 
  
  
