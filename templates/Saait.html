@@ -964,6 +964,17 @@ th, td {
 
 <script>
 
+
+// ✅ Ensure the Add Ticket form stays hidden on page load or reload
+document.addEventListener("DOMContentLoaded", () => {
+  const ticketModal = document.getElementById("ticketModal");
+  if (ticketModal) {
+    ticketModal.style.display = "none";     // hide modal
+    ticketModal.classList.remove("active"); // remove any active flag if present
+  }
+});
+
+
 // // === Prevent double submissions ===
 // window.isAddingTicket = window.isAddingTicket || false;
 
