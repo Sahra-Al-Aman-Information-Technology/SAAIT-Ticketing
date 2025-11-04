@@ -501,17 +501,26 @@ case "raisedby": {
       }))
       .filter(x => x.id && x.name);
 
-    // ✅ logic:
-    // - RaisedBy dropdown: all users who are not flagged AssignedTo + RaisedBy flagged users
-    // - AssignedTo dropdown: all users who are not flagged RaisedBy + AssignedTo flagged users
+    // ✅ Updated filtering logic
     let finalList;
     if (isAssigned) {
-      finalList = norm.filter(u => !u.isRaisedBy && (u.isAssignedTo || !u.isRaisedBy && !u.isAssignedTo));
+      // Assigned To → show only users flagged as assigned-to
+      finalList = norm.filter(u => u.isAssignedTo);
     } else {
-      finalList = norm.filter(u => !u.isAssignedTo && (u.isRaisedBy || !u.isAssignedTo && !u.isRaisedBy));
+      // Raised By → show only users flagged as raised-by
+      finalList = norm.filter(u => u.isRaisedBy);
     }
 
-    // ✅ populate dropdown
+    // ✅ Fallback: if project has no matching users, show all available of that type
+    if (!finalList.length) {
+      if (isAssigned) {
+        finalList = norm.filter(u => u.isAssignedTo); // all assigned-to users
+      } else {
+        finalList = norm.filter(u => u.isRaisedBy); // all raised-by users
+      }
+    }
+
+    // ✅ Populate dropdown
     finalList.forEach(u => {
       const opt = document.createElement("option");
       opt.value = u.id;
@@ -522,7 +531,7 @@ case "raisedby": {
       field.appendChild(opt);
     });
 
-    // ✅ ensure current text appears even if not in list
+    // ✅ Ensure current text appears even if not in list
     const currentText = (text || "").trim();
     if (
       currentText &&

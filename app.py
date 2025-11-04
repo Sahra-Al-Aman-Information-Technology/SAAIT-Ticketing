@@ -205,284 +205,180 @@ def rafey_page():
  
  
 @app.route("/add_ticket", methods=["POST"])
-
 def add_ticket():
-
     try:
-
         data = request.form
-
         print("📥 Received new ticket data:", data.to_dict())
- 
+
         # --- Handle attachment ---
-
         file = request.files.get('attachment')
-
         attachment = None
-
         if file and allowed_file(file.filename):
-
             filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
-
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
             attachment = filename
- 
+
         # --- Get user role ---
-
         user_role = session.get("role") or request.headers.get("Role")
-
         if not user_role:
-
             return jsonify({"error": "User role not found"}), 403
 
         system_role = user_role.strip().upper()
-
         if system_role == "VIEWER":
-
             return jsonify({"error": "Access denied"}), 403
- 
+
         # --- Safe integer helper ---
-
         def safe_int(value):
-
             try:
-
                 return int(value)
-
             except (TypeError, ValueError):
-
                 return None
- 
+
         # --- Collect numeric IDs safely ---
-
-        subject_id = safe_int(data.get("subject_id"))
-
+        project_id = safe_int(data.get("project_id"))
+        raisedby_id = safe_int(data.get("raisedby"))
+        assignedto_id = safe_int(data.get("assignedto"))
         priority_id = safe_int(data.get("priority_id"))
-
         status_id = safe_int(data.get("status_id"))
 
-        project_id = safe_int(data.get("project_id"))
+        # ✅ Automatically get logged-in user's client_id for tickets table
+        client_id = session.get("client_id") or session.get("ClientID") or None
+        if not client_id:
+            print("⚠️ ClientID not found in session; setting default 0")
+            client_id = 0
 
-        client_id = safe_int(data.get("client_id"))
+        # --- Subject text from combo box ---
+        subject_text = (data.get("subject") or data.get("subject_id") or "").strip()
 
-        raisedby_id = safe_int(data.get("raisedby"))
-
-        assignedto_id = safe_int(data.get("assignedto"))
- 
         # ✅ Prevent DB NULL errors by setting safe fallbacks
-
         stream = data.get("stream") or "-"
-
         dashboard = data.get("dashboard") or data.get("Stream2") or "-"
-
         if stream == "Other":
-
             stream = data.get("customStream") or "-"
-
         if dashboard == "Other":
-
             dashboard = data.get("customDashboard") or "-"
- 
-        # ✅ Fallbacks for NOT NULL columns
-
         raisedby_id = raisedby_id or 0
-
         assignedto_id = assignedto_id or 0
- 
+
         # --- DB Connection ---
-
         conn = get_db_connection()
-
         cur = conn.cursor()
- 
-        # --- Convert IDs to readable names ---
 
+        # ✅ Step 1: Ensure Subject exists or insert new one (ProjectID only)
+        subject_name = subject_text or "-"
         cur.execute(
-
-            "SELECT SubjectName FROM ticket.ProjectSubject WHERE SubjectID=? AND ProjectID=?",
-
-            (subject_id, project_id),
-
+            "SELECT SubjectID, SubjectName FROM ticket.ProjectSubject WHERE ProjectID=? AND SubjectName=?",
+            (project_id, subject_name),
         )
+        existing_subject = cur.fetchone()
 
-        row = cur.fetchone()
-
-        subject_name = row[0] if row else str(subject_id)
- 
-        cur.execute(
-
-            "SELECT PriorityName FROM ticket.ProjectPriority WHERE PriorityID=? AND ProjectID=?",
-
-            (priority_id, project_id),
-
-        )
-
-        row = cur.fetchone()
-
-        priority_name = row[0] if row else str(priority_id)
- 
-        cur.execute(
-
-            "SELECT StatusName FROM ticket.ProjectStatus WHERE StatusID=? AND ProjectID=?",
-
-            (status_id, project_id),
-
-        )
-
-        row = cur.fetchone()
-
-        status_name = row[0] if row else str(status_id)
- 
-        # --- Comments ---
-
-        comment = (data.get("comment") or "").strip()
-
-        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-
-        full_comment = f"[{timestamp}] {comment}" if comment else ""
- 
-        closed_date = data.get("closed_date") or None
-
-        if status_name != "Closed":
-
-            closed_date = None
- 
-        # --- Insert initial row (without ticket_no) ---
-
-        cur.execute(
-
-            """
-
-            INSERT INTO ticket.tickets (
-
-                ticket_no, dashboard, stream, raised_by, subject, date_logged, closed_date,
-
-                priority, status, assigned_to, description, attachment, comments, system_role,
-
-                ProjectID, ClientID
-
+        if existing_subject:
+            subject_name = existing_subject[1]
+        else:
+            cur.execute(
+                "INSERT INTO ticket.ProjectSubject (ProjectID, SubjectName, CreatedDate) VALUES (?, ?, GETDATE())",
+                (project_id, subject_name),
             )
+            conn.commit()
 
-            OUTPUT INSERTED.id
-
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-
-            """,
-
-            (
-
-                None,
-
-                dashboard,
-
-                stream,
-
-                raisedby_id,
-
-                subject_name,
-
-                data.get("date_logged"),
-
-                closed_date,
-
-                priority_name,
-
-                status_name,
-
-                assignedto_id,
-
-                data.get("description"),
-
-                attachment,
-
-                full_comment,
-
-                system_role,
-
-                project_id,
-
-                client_id,
-
-            ),
-
+        # --- Convert priority/status IDs to names ---
+        cur.execute(
+            "SELECT PriorityName FROM ticket.ProjectPriority WHERE PriorityID=? AND ProjectID=?",
+            (priority_id, project_id),
         )
- 
-        ticket_id = cur.fetchone()[0]
-
-        if not ticket_id:
-
-            conn.rollback()
-
-            return jsonify({"error": "Failed to retrieve ticket ID"}), 500
- 
-        # --- Generate unique sequential ticket number ---
+        row = cur.fetchone()
+        priority_name = row[0] if row else str(priority_id)
 
         cur.execute(
-
-            "SELECT MAX(ticket_no) FROM ticket.tickets WHERE system_role = ?", (system_role,)
-
+            "SELECT StatusName FROM ticket.ProjectStatus WHERE StatusID=? AND ProjectID=?",
+            (status_id, project_id),
         )
+        row = cur.fetchone()
+        status_name = row[0] if row else str(status_id)
 
-        last_ticket = cur.fetchone()[0]
+        # --- Comments ---
+        comment = (data.get("comment") or "").strip()
+        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+        full_comment = f"[{timestamp}] {comment}" if comment else ""
 
-        last_num = 0
+        closed_date = data.get("closed_date") or None
+        if status_name != "Closed":
+            closed_date = None
 
-        if last_ticket:
-
-            import re
-
-            match = re.search(r"(\d+)$", last_ticket)
-
-            if match:
-
-                last_num = int(match.group(1))
-
-        ticket_no = f"{system_role}{last_num + 1:04d}"
- 
-        cur.execute("UPDATE ticket.tickets SET ticket_no = ? WHERE id = ?", (ticket_no, ticket_id))
- 
-        # --- Insert ticket history ---
-
+        # --- Insert ticket (includes ClientID now) ---
         cur.execute(
-
             """
-
-            INSERT INTO ticket.ticket_history (ticket_id, action_type, field_name, new_value, changed_at)
-
-            VALUES (?, 'Created', 'Status', ?, ?)
-
+            INSERT INTO ticket.tickets (
+                ticket_no, dashboard, stream, raised_by, subject, date_logged, closed_date,
+                priority, status, assigned_to, description, attachment, comments, system_role,
+                ProjectID, ClientID
+            )
+            OUTPUT INSERTED.id
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-
-            (ticket_id, status_name, datetime.now()),
-
+            (
+                None,
+                dashboard,
+                stream,
+                raisedby_id,
+                subject_name,
+                data.get("date_logged"),
+                closed_date,
+                priority_name,
+                status_name,
+                assignedto_id,
+                data.get("description"),
+                attachment,
+                full_comment,
+                system_role,
+                project_id,
+                client_id,  # ✅ auto-filled from session
+            ),
         )
- 
+
+        ticket_id = cur.fetchone()[0]
+        if not ticket_id:
+            conn.rollback()
+            return jsonify({"error": "Failed to retrieve ticket ID"}), 500
+
+        # --- Generate sequential ticket number ---
+        cur.execute("SELECT MAX(ticket_no) FROM ticket.tickets WHERE system_role = ?", (system_role,))
+        last_ticket = cur.fetchone()[0]
+        last_num = 0
+        if last_ticket:
+            import re
+            match = re.search(r"(\d+)$", last_ticket)
+            if match:
+                last_num = int(match.group(1))
+        ticket_no = f"{system_role}{last_num + 1:04d}"
+
+        cur.execute("UPDATE ticket.tickets SET ticket_no = ? WHERE id = ?", (ticket_no, ticket_id))
+
+        # --- Insert ticket history ---
+        cur.execute(
+            """
+            INSERT INTO ticket.ticket_history (ticket_id, action_type, field_name, new_value, changed_at)
+            VALUES (?, 'Created', 'Status', ?, ?)
+            """,
+            (ticket_id, status_name, datetime.now()),
+        )
+
         conn.commit()
-
         cur.close()
-
         conn.close()
- 
+
         send_ticket_notification({**data.to_dict(), "ticket_no": ticket_no}, mode="create")
 
         return jsonify({"message": "Ticket added successfully", "ticket_no": ticket_no}), 200
- 
+
     except Exception as e:
-
-        # ✅ Convert SQL NULL errors into a clean warning (no popup)
-
         msg = str(e)
-
         if "Cannot insert the value NULL" in msg:
-
             print(f"⚠️ Soft warning ignored: {msg}")
-
             return jsonify({"message": "Ticket added successfully (auto-fixed NULL)", "ticket_no": "N/A"}), 200
-
         traceback.print_exc()
-
         return jsonify({"error": msg}), 500
+
 
  
 
@@ -510,22 +406,13 @@ def update_ticket():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Fetch current ticket
-        cur.execute("SELECT * FROM ticket.tickets WHERE id = ?", (ticket_id,))
-        row = cur.fetchone()
-        if not row:
+        # --- Fetch current ticket properly ---
+        cur.execute("SELECT id, comments FROM ticket.tickets WHERE id = ?", (ticket_id,))
+        ticket_row = cur.fetchone()
+        if not ticket_row:
             return jsonify({"error": "Ticket not found"}), 404
 
-        old_values = dict(zip([column[0] for column in cur.description], row))
-
-        # Comment handling
-        # Comment handling  ✅ improved to append safely (not overwrite)
-
-        new_comment = (data.get("comment") or "").strip()
-    
-        # Ensure we have a string for existing comments
-        old_comments_raw = old_values.get("comments", "") or ""
-        # convert to string in case DB returned bytes or None
+        old_comments_raw = ticket_row[1] or ""
         if isinstance(old_comments_raw, (bytes, bytearray)):
             try:
                 old_comments = old_comments_raw.decode("utf-8", errors="ignore")
@@ -533,20 +420,26 @@ def update_ticket():
                 old_comments = str(old_comments_raw)
         else:
             old_comments = str(old_comments_raw)
-    
-        updated_comments = old_comments
-    
+
+        # ✅ Properly fetch full row for other fields AFTER reading comments
+        cur.execute("SELECT * FROM ticket.tickets WHERE id = ?", (ticket_id,))
+        row = cur.fetchone()
+        old_values = dict(zip([column[0] for column in cur.description], row))
+
+        # --- Comment handling ---
+        new_comment = (data.get("comment") or "").strip()
+        updated_comments = old_comments.strip()
+
         if new_comment:
             timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
             formatted = f"[{timestamp}] {new_comment}"
-            # Put newest on top preserving any existing content below
-            if updated_comments and updated_comments.strip():
-                updated_comments = f"{formatted}\n{updated_comments.strip()}"
+            # ✅ Always prepend new comment on top
+            if updated_comments:
+                updated_comments = f"{formatted}\n{updated_comments}"
             else:
                 updated_comments = formatted
-    
- 
-        # Role and stream/dashboard
+
+        # --- Role and other fields ---
         user_role = session.get("role") or request.headers.get("Role")
         user_role = user_role.strip().upper() if user_role else ""
 
@@ -557,185 +450,108 @@ def update_ticket():
         if dashboard == "Other":
             dashboard = data.get("customDashboard")
 
-        # Project & Client
         project_id = data.get("project_id") or old_values.get("ProjectID")
         client_id = data.get("client_id") or old_values.get("ClientID")
 
-                # === Resolve user ids/names passthrough (robust non-null handling) ===
- 
+        # --- Keep all your existing helper functions ---
         def _old_value_lookup(key):
-
-            """Case-insensitive lookup for old_values keys (handles DB column name variations)."""
-
             if not isinstance(old_values, dict):
-
                 return None
-
             if key in old_values and old_values[key] is not None:
-
                 return old_values[key]
-
             key_low = key.lower()
-
             for k in old_values.keys():
-
                 if k and k.lower() == key_low:
-
                     return old_values.get(k)
-
-            # try with/without underscores (e.g., Assigned_To vs AssignedTo)
-
             key_norm = key_low.replace("_", "")
-
             for k in old_values.keys():
-
                 if k and k.lower().replace("_", "") == key_norm:
-
                     return old_values.get(k)
-
             return None
- 
+
         def _get_field_from_request_or_old(request_key, old_key):
-
-            """Prefer non-empty request value; else fall back to old value; always return '' instead of None."""
-
             val = data.get(request_key)
-
             if val is not None and str(val).strip() != "":
-
                 return val
-
             oldv = _old_value_lookup(old_key)
-
             return oldv if (oldv is not None and str(oldv).strip() != "") else ""
- 
-        assigned_to = _get_field_from_request_or_old("assignedto", "assigned_to")
 
-        raised_by   = _get_field_from_request_or_old("raisedby",   "raised_by")
- 
-        # --- Helpers: map digit-like ID to name from Project tables; else return as-is ---
+        assigned_to = _get_field_from_request_or_old("assignedto", "assigned_to")
+        raised_by = _get_field_from_request_or_old("raisedby", "raised_by")
 
         def _map_lookup_name(cur, table, id_col, name_col, projectid, val):
-
             sval = ("" if val is None else str(val)).strip()
-
             if not sval:
-
                 return sval
-
             if sval.isdigit():
-
                 if projectid:
-
                     cur.execute(
-
                         f"SELECT {name_col} FROM ticket.{table} WHERE {id_col}=? AND ProjectID=?",
-
                         (sval, projectid)
-
                     )
-
                     r = cur.fetchone()
-
                 else:
-
                     cur.execute(
-
                         f"SELECT {name_col} FROM ticket.{table} WHERE {id_col}=?",
-
                         (sval,)
-
                     )
-
                     r = cur.fetchone()
-
                 return r[0] if r and r[0] else sval
-
             return sval
- 
-        # Normalize subject/priority/status to names before saving
 
         subject_in = data.get("subject") or _old_value_lookup("subject")
-
         priority_in = data.get("priority") or _old_value_lookup("priority")
-
         status_in = data.get("status") or _old_value_lookup("status")
- 
+
         subject_val = _map_lookup_name(cur, "ProjectSubject", "SubjectID", "SubjectName", project_id, subject_in)
-
         priority_val = _map_lookup_name(cur, "ProjectPriority", "PriorityID", "PriorityName", project_id, priority_in)
-
         status_val = _map_lookup_name(cur, "ProjectStatus", "StatusID", "StatusName", project_id, status_in)
- 
-        # Closed Date depends on normalized status
 
         closed_date = data.get("closed_date") if status_val == "Closed" else None
- 
         ticket_no = _old_value_lookup("ticket_no")
- 
+
         update_query = """
-
             UPDATE ticket.tickets
-
             SET dashboard=?, stream=?, subject=?, date_logged=?,
-
                 closed_date=?, priority=?, status=?, assigned_to=?,
-
                 description=?, comments=?, raised_by=?, ProjectID=?, ClientID=?
-
         """
-
         params = [
-
             dashboard,
-
             stream,
-
-            subject_val,   # mapped name
-
+            subject_val,
             data.get("date_logged") or _old_value_lookup("date_logged"),
-
             closed_date,
-
-            priority_val,  # mapped name
-
-            status_val,    # mapped name
-
+            priority_val,
+            status_val,
             assigned_to,
-
             data.get("description") or _old_value_lookup("description"),
-
             updated_comments,
-
             raised_by,
-
             project_id,
-
-            client_id
-
+            client_id,
         ]
- 
+
         if attachment:
-
             update_query += ", attachment=?"
-
             params.append(attachment)
- 
-        update_query += " WHERE id=?"
 
+        update_query += " WHERE id=?"
         params.append(ticket_id)
- 
+
         cur.execute(update_query, tuple(params))
 
- 
-        # Log history with normalized names for readability
+        # --- History logging ---
         def _log_change(field, old_raw, new_raw):
             if (new_raw or "") != (old_raw or ""):
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT INTO ticket.ticket_history
                     (ticket_id, action_type, field_name, old_value, new_value, changed_at)
                     VALUES (?, 'Updated', ?, ?, ?, ?)
-                """, (ticket_id, field, old_raw, new_raw, datetime.now()))
+                    """,
+                    (ticket_id, field, old_raw, new_raw, datetime.now()),
+                )
 
         _log_change("status", old_values.get("status"), status_val)
         _log_change("priority", old_values.get("priority"), priority_val)
@@ -750,18 +566,16 @@ def update_ticket():
         cur.close()
         conn.close()
 
-        # Return updated ticket info for frontend to show (echo normalized names)
         updated_ticket = {
             **data.to_dict(),
             "id": ticket_id,
             "comments": updated_comments,
             "ProjectID": project_id,
             "ClientID": client_id,
-            # normalized fields exposed back
             "subject": subject_val,
             "priority": priority_val,
             "status": status_val,
-            "closed_date": closed_date
+            "closed_date": closed_date,
         }
         if attachment:
             updated_ticket["attachment"] = attachment
@@ -773,6 +587,7 @@ def update_ticket():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Failed to update ticket: {str(e)}"}), 500
+
 
 
 
@@ -1688,12 +1503,11 @@ def get_project():
 @app.route('/getprojectusers', methods=['GET'])
 def getprojectusers():
     projectid = request.args.get('projectid')
-    client_id = request.args.get('client_id')  # ✅ client-based filtering
     stream_name = request.args.get('stream')   # ✅ stream-based filtering
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # --- Base: Always show all users mapped to the project/client ---
+        # --- Base: Always show all users mapped to the project ---
         if projectid:
             base_query = """
                 SELECT DISTINCT 
@@ -1717,11 +1531,10 @@ def getprojectusers():
                     INNER JOIN ticket.saait_users su
                         ON TRY_CAST(t.assigned_to AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
                     WHERE TRY_CAST(t.ProjectID AS NVARCHAR) = ?
-                      AND t.ClientID = ?
                       AND t.stream = ?
                       AND su.status = 'Active'
                 """
-                cursor.execute(stream_query, (projectid, client_id, stream_name))
+                cursor.execute(stream_query, (projectid, stream_name))
                 stream_user_ids = [str(r[0]) for r in cursor.fetchall()]
                 if stream_user_ids:
                     # Only include users from both mapping and ticket
@@ -1731,39 +1544,6 @@ def getprojectusers():
 
             cursor.execute(base_query, tuple(params))
 
-        elif client_id:
-            base_query = """
-                SELECT DISTINCT 
-                    upm.user_id   AS userid,
-                    upm.user_name AS username,
-                    su.is_raisedby_flag,
-                    su.can_be_raised
-                FROM ticket.UserProjectMapping upm
-                INNER JOIN ticket.saait_users su
-                    ON TRY_CAST(upm.user_id AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
-                WHERE upm.client_id = ? AND su.status = 'Active'
-            """
-            params = [client_id]
-
-            if stream_name:
-                stream_query = """
-                    SELECT DISTINCT 
-                        su.id AS userid
-                    FROM ticket.tickets t
-                    INNER JOIN ticket.saait_users su
-                        ON TRY_CAST(t.assigned_to AS NVARCHAR) = TRY_CAST(su.id AS NVARCHAR)
-                    WHERE t.ClientID = ?
-                      AND t.stream = ?
-                      AND su.status = 'Active'
-                """
-                cursor.execute(stream_query, (client_id, stream_name))
-                stream_user_ids = [str(r[0]) for r in cursor.fetchall()]
-                if stream_user_ids:
-                    placeholders = ",".join("?" * len(stream_user_ids))
-                    base_query += f" AND TRY_CAST(upm.user_id AS NVARCHAR) IN ({placeholders})"
-                    params.extend(stream_user_ids)
-
-            cursor.execute(base_query, tuple(params))
         else:
             # --- Fallback: all active users ---
             cursor.execute("""
@@ -1820,6 +1600,7 @@ def getprojectusers():
     finally:
         cursor.close()
         conn.close()
+
 
 
 
