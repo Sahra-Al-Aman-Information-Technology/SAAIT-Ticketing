@@ -31,37 +31,7 @@ CORS(app)
  
 last_ping = time.time()
 lock = Lock()
- 
-# def auto_close_old_tickets():
-#     try:
-#         conn = get_db_connection()
-#         cur = conn.cursor()
- 
-#         # Calculate date 7 days ago
-#         threshold_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
- 
-#         # Update tickets older than 7 days with Open/In Progress status
-#         cur.execute("""
-#         UPDATE tickets
-#         SET status = 'Closed', closed_date = ?
-#         WHERE (status = 'On Hold (ARM Team)' OR status = 'On Hold (SAAIT TEAM)')
-#         AND TRY_CAST(date_logged AS DATE) <= ?
-#         """, (datetime.now().strftime('%Y-%m-%d'), threshold_date))
- 
-#         conn.commit()
-#         cur.close()
-#         conn.close()
-#         print("✅ Auto-closed tickets older than 7 days.")
-#     except Exception as e:
-#         print("❌ Failed to auto-close tickets:", e)
-       
-# def heartbeat_monitor():
-#     while True:
-#         time.sleep(10)
-#         with lock:
-#             if time.time() - last_ping > 15:
-#                 print("❌ Browser disconnected. Shutting down...")
-#                 os._exit(0)  # force kill Flask
+
  
 def open_browser():
     webbrowser.open_new("http://127.0.0.1:5000")
@@ -443,8 +413,8 @@ def update_ticket():
         user_role = session.get("role") or request.headers.get("Role")
         user_role = user_role.strip().upper() if user_role else ""
 
-        stream = data.get("stream")
-        dashboard = data.get("dashboard") or data.get("Stream 2")
+        stream = data.get("stream") or old_values.get("stream")
+        dashboard = data.get("dashboard") or old_values.get("dashboard")
         if stream == "Other":
             stream = data.get("customStream")
         if dashboard == "Other":
@@ -745,9 +715,6 @@ def get_tickets():
 
 
 
-
-
-
 # ✅ NEW route: Get ticket history for tooltip
 @app.route("/get_ticket_history/<int:ticket_id>")
 def get_ticket_history(ticket_id):
@@ -965,44 +932,6 @@ def forgot_password():
     except Exception as e:
         print("Email error:", e)
         return jsonify({"success": False, "message": "Failed to send email"}), 500
-
-
-#     # Delete Ticket
-# @app.route("/delete_ticket/<int:ticket_id>", methods=["DELETE"])
-# def delete_ticket(ticket_id):
-#     print("🔴 DELETE request received for ticket ID:", ticket_id)
-
-#     try:
-#         conn = get_db_connection()
-#         cur = conn.cursor()
-
-#         # Check if ticket exists
-#         cur.execute("SELECT ticket_no FROM ticket.tickets WHERE id = ?", (ticket_id,))
-#         row = cur.fetchone()
-#         if not row:
-#             cur.close()
-#             conn.close()
-#             return jsonify({"error": "Ticket not found"}), 404
-
-#         ticket_no = row[0]
-#         print(f"🗑 Deleting Ticket {ticket_no} (ID {ticket_id})")
-
-#         # First delete related history
-#         cur.execute("DELETE FROM ticket.ticket_history WHERE ticket_id = ?", (ticket_id,))
-
-#         # Then delete the ticket itself
-#         cur.execute("DELETE FROM ticket.tickets WHERE id = ?", (ticket_id,))
-#         conn.commit()
-
-#         cur.close()
-#         conn.close()
-
-#         print(f"✅ Ticket {ticket_no} deleted successfully.")
-#         return jsonify({"message": f"Ticket {ticket_no} deleted successfully"}), 200
-
-#     except Exception as e:
-#         traceback.print_exc()
-#         return jsonify({"error": "Failed to delete ticket"}), 500
 
    
  
@@ -1275,8 +1204,6 @@ def get_users():
 
 
 
-# ✅ Add new user with client and project mapping
-# ✅ Add new user with client and project mapping (updated with RaisedBy & AssignedTo flags)
 
 @app.route("/add_saait_user", methods=["POST"])
 
@@ -1379,10 +1306,6 @@ def add_saait_user():
         return jsonify({"error": str(e)}), 500
 
  
- 
-
-
-
 
 # ✅ Delete user
 @app.route("/delete_saait_user/<int:user_id>", methods=["DELETE"])
@@ -1399,7 +1322,6 @@ def delete_saait_user(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-
  
 @app.route("/users.html")
 def users_page():
@@ -1411,8 +1333,6 @@ def users_page():
         return "❌ Access Denied", 403
  
     return render_template("users.html")
- 
- 
  
  
  # ✅ Get distinct streams
@@ -1496,9 +1416,6 @@ def get_project():
         return jsonify(error=str(e)), 500
 
 
-
-# app.py — replace existing getprojectusers with this
-# ✅ Updated: getprojectusers — includes RaisedBy / AssignedTo flags
 
 @app.route('/getprojectusers', methods=['GET'])
 def getprojectusers():
@@ -1602,11 +1519,6 @@ def getprojectusers():
         conn.close()
 
 
-
-
-
-
- 
 
 
 @app.route("/get_streams_by_client", methods=["GET"])
@@ -1862,66 +1774,6 @@ def get_client_projects(client_id):
  
  
 
-# # Used for View Clients screen (show all clients even if they have no projects)
-# @app.route("/get_clients_view")
-# def get_clients_view():
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
- 
-#     cursor.execute("""
-#         SELECT
-#             c.ClientID,
-#             c.ClientName,
-#             c.Email,
-#             c.CreatedDate,
-#             c.Status
-#         FROM ticket.client c
-#         LEFT JOIN ticket.project p
-#             ON c.ClientID = p.ClientID
-#         GROUP BY
-#             c.ClientID,
-#             c.ClientName,
-#             c.Email,
-#             c.CreatedDate,
-#             c.Status
-#         ORDER BY c.CreatedDate DESC
-#     """)
- 
-#     rows = cursor.fetchall()
-#     conn.close()
- 
-#     clients = []
-#     for row in rows:
-#         clients.append({
-#             "ClientID": row[0],
-#             "ClientName": row[1],
-#             "Email": row[2],
-#             "CreatedDate": row[3].strftime("%Y-%m-%d") if row[3] else None,
-#             "Status": row[4]
-#         })
- 
-#     return jsonify(clients)
-
-# @app.route("/update_client/<int:client_id>", methods=["POST"])
-# def update_client(client_id):
-#     client_name = request.form.get("ClientName")
-#     created_date = request.form.get("CreatedDate")
-#     status = request.form.get("Status")
- 
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
- 
-#     if created_date:
-#         query = "UPDATE Ticket.Client SET ClientName=?, CreatedDate=?, Status=? WHERE ClientID=?"
-#         cursor.execute(query, (client_name, created_date, status, client_id))
-#     else:
-#         query = "UPDATE Ticket.Client SET ClientName=?, Status=? WHERE ClientID=?"
-#         cursor.execute(query, (client_name, status, client_id))
- 
-#     conn.commit()
-#     conn.close()
-#     return jsonify({"message": "Client updated successfully!"})
-
 
 @app.route("/update_client/<int:client_id>", methods=["POST"])
 def update_client(client_id):
@@ -1957,9 +1809,6 @@ def update_client(client_id):
     except Exception as e:
         print("❌ Error updating client:", e)
         return jsonify({"error": str(e)}), 500
- 
- 
- 
  
  
  
@@ -2169,38 +2018,6 @@ def get_clients_dropdown():
  
     return jsonify(clients)
 
-# @app.route("/get_projects", methods=["GET"])
-# def get_projects():
-#     try:
-#         conn = get_db_connection()
-#         cur = conn.cursor()
- 
-#         cur.execute("""
-#             SELECT p.ProjectID, p.ProjectName, p.ClientID, c.ClientName, p.CreatedDate, p.Status
-#             FROM Ticket.Project p
-#             LEFT JOIN Ticket.Client c ON p.ClientID = c.ClientID
-#             where p.deletestatus='Not Deleted'
-#             ORDER BY p.ProjectID ASC
-#         """)
-       
-#         rows = cur.fetchall()
-#         conn.close()
- 
-#         projects = [
-#             {
-#                 "ProjectID": row[0],
-#                 "ProjectName": row[1],
-#                 "ClientID": row[2],
-#                 "ClientName": row[3],
-#                 "CreatedDate": row[4].strftime("%Y-%m-%d") if row[4] else "",
-#                 "Status": row[5]
-#             }
-#             for row in rows
-#         ]
- 
-#         return jsonify(projects)
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
  
 @app.route("/add_project", methods=["POST"])
 def add_project():
@@ -2294,41 +2111,6 @@ def get_project_by_id():
  
  
 
-# @app.route("/get_project_by_id")
-# def get_project_by_id():
-#     project_id = request.args.get("project_id")
-#     if not project_id:
-#         return jsonify({"success": False, "message": "Missing project_id"}), 400
- 
-#     conn = get_db_connection()
-#     cur = conn.cursor()
- 
-#     # Join project with client to get ClientName
-#     query = """
-#         SELECT p.ProjectID, p.ClientID, c.ClientName, p.ProjectName, p.CreatedDate, p.Status
-#         FROM ticket.project p
-#         LEFT JOIN ticket.client c ON p.ClientID = c.ClientID
-#         WHERE p.ProjectID = ?
-#         and p.deletestatus='Not Delete'
-#     """
-#     cur.execute(query, (project_id,))
-#     row = cur.fetchone()
-#     cur.close()
-#     conn.close()
- 
-#     if not row:
-#         return jsonify({"success": False, "message": "Project not found"}), 404
- 
-#     project = {
-#         "ProjectID": row[0],
-#         "ClientID": row[1],
-#         "ClientName": row[2],
-#         "ProjectName": row[3],
-#         "CreatedDate": str(row[4]),
-#         "Status": row[5]
-#     }
- 
-#     return jsonify({"success": True, "project": project})
  
 @app.route("/edit_project", methods=["POST"])
 def edit_project():
@@ -2419,52 +2201,7 @@ def add_stream2():
     finally:
         conn.close()
 
-# ✅ Get Stream1 for a project
 
-# @app.route("/get_stream1/<int:project_id>")
-
-# def get_stream1(project_id):
-
-#     try:
-
-#         conn = get_db_connection()
-
-#         cursor = conn.cursor()
-
-#         cursor.execute("SELECT StreamID, Stream1 FROM TICKET.STREAM WHERE ProjectID=? AND Stream2 IS NULL", project_id)
-
-#         streams = [{"StreamID": row[0], "Stream1": row[1]} for row in cursor.fetchall()]
-
-#         return jsonify(streams)
-
-#     except Exception as e:
-
-#         return jsonify({"success": False, "message": str(e)})
-
-#     finally:
-
-#         conn.close()
-
-
- 
- 
-# ✅ Get Stream2 for a project
-# ✅ Get Stream2 for a project
-# @app.route("/get_stream2/<project_id>")
-# def get_stream2(project_id):
-#     conn = get_db_connection()
-#     cur = conn.cursor()
-#     # If ProjectID in SQL is INT, convert to int safely, otherwise use string
-#     try:
-#         project_id_int = int(project_id)
-#         cur.execute("SELECT Stream2Name FROM ticket.Stream2 WHERE ProjectID=?", (project_id_int,))
-#     except ValueError:
-#         # fallback if project_id is string
-#         cur.execute("SELECT Stream2Name FROM ticket.Stream2 WHERE ProjectID=?", (project_id,))
-#     rows = cur.fetchall()
-#     cur.close()
-#     conn.close()
-#     return jsonify([r[0] for r in rows])
 
 # ✅ Get Stream1 for a project
 @app.route("/get_stream1/<int:project_id>")

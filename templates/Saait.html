@@ -234,24 +234,7 @@ footer {
       background: white;
     }
  
-    /* ARM TICKETS label above Attachment column */
-    /* .attachment-header-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .attachment-header-container .arm-tickets-label {
-      font-weight: bold;
-      font-size: 0.9rem;
-      margin-bottom: 4px;
-      color: #020d19;
-      cursor: default;
-      user-select: none;
-      background-color: #081b29;
-      padding: 3px 10px;
-      border-radius: 6px;
-      color: white;
-    } */
+  
  
     /* ARM logo above Edit column */
     .edit-header-container {
@@ -619,18 +602,11 @@ th, td {
 <!-- Client Dropdown -->
 <div class="dropdown" style="margin-right: 6px;">
 <button id="clientBtn" class="logout-button" style="margin: 7px 0;">Client</button>
-<!-- <div id="clientDropdown" class="dropdown-content" style="display:none;">
-<a href="/createclient" id="createClient">Create Client</a>
-<a href="/viewclients" id="viewClient">View Client</a>
-</div> -->
 </div>
 <!-- Project Dropdown -->
 <div class="dropdown" style="margin-right: 6px;">
 <button id="projectBtn" class="logout-button" style="margin: 7px 0;">Project</button>
-<!-- <div id="projectDropdown" class="dropdown-content" style="display:none;">
-<a href="/createproject" id="createProject">Create Project</a>
-<a href="/view_projects" id="viewProject">View Project</a>
-</div> -->
+
 </div>
 </div>
  
@@ -697,35 +673,6 @@ th, td {
  
  
 
-<!-- <div style="
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -50px;
-  margin-bottom: 10px;
-">
-  <div id="ticketInfo" style="display: flex; align-items: center; gap: 8px;">
-    <label id="ticketSystemLabel" style="
-      display: inline-block;
-      padding: 6px 10px;
-      background-color: #020d19;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: small;
-      font-family: Arial, sans-serif;
-      line-height: normal;
-      vertical-align: middle;
-      margin: 0;
-    ">
-      ARM TICKETS
-    </label>
- 
-    <img id="ticketLogo" src="{{ url_for('static', filename='arm LOGO.jpeg') }}" alt="ARM Logo"
-         style="height: 27px; border-radius: 4px;" />
-  </div>
-</div>
-  -->
- 
  
  
 <div style="display: flex; justify-content: center; margin-top: 20px;">
@@ -976,62 +923,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
  
 
-
- 
-
-// // === Prevent double submissions ===
-// window.isAddingTicket = window.isAddingTicket || false;
-
-// // adapt these selectors to your page
-// const addTicketForm = document.getElementById('ticketForm') || document.getElementById('addTicketForm');
-// const saveTicketBtn = document.getElementById('saveTicketBtn') || document.querySelector('#ticketModal button[type="submit"], #saveTicketBtn, #addTicketButton');
-
-// if (addTicketForm && saveTicketBtn) {
-//   // ensure we only attach once
-//   if (!saveTicketBtn.dataset.listenerAttached) {
-//     addTicketForm.addEventListener('submit', async (e) => {
-//       e.preventDefault();
-
-//       if (window.isAddingTicket) return;          // guard
-//       window.isAddingTicket = true;
-//       saveTicketBtn.disabled = true;
-
-//       try {
-//         const formData = new FormData(addTicketForm);
-
-//         // send add request
-//         const resp = await fetch('/add_ticket', {
-//           method: 'POST',
-//           body: formData
-//         });
-
-//         const result = await resp.json();
-//         if (!resp.ok) {
-//           alert(result.error || 'Failed to add ticket');
-//         } else {
-//           // authoritative reload from server
-//           if (typeof loadTickets === 'function') {
-//             await loadTickets();
-//           } else if (typeof loadTicketsFromBackend === 'function') {
-//             await loadTicketsFromBackend();
-//           } else {
-//             // fallback: refresh page
-//             location.reload();
-//           }
-//         }
-//       } catch (err) {
-//         console.error('Add ticket error', err);
-//         alert('Network error while adding ticket');
-//       } finally {
-//         window.isAddingTicket = false;
-//         saveTicketBtn.disabled = false;
-//       }
-//     });
-
-//     saveTicketBtn.dataset.listenerAttached = '1';
-//   }
-// }
-
   
 // ✅ Hide Add Ticket Modal immediately on load
 document.addEventListener("DOMContentLoaded", () => {
@@ -1051,19 +942,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
-
-
-
- 
  
  let userRole = "";
-let tickets = [];  // 👈 must exist globally and used by renderTickets()
+let tickets = [];  
  
-// ✅ Use actual role from sessionStorage instead of hardcoding "ARM"
 const TICKET_PREFIX = sessionStorage.getItem("role") || "";
  
-// Track if editing or adding
 let editingIndex = -1;
  
   
@@ -1110,7 +994,6 @@ modalStatus.addEventListener("change", () => {
 
     modalClosedDate.disabled = false;
  
-    // set today's date in yyyy-mm-dd format
 
     const today = new Date();
 
@@ -1133,8 +1016,6 @@ modalStatus.addEventListener("change", () => {
 });
 
  
-
-// ------------------ Persist & restore slicer state ------------------
 
 // Save current filters into sessionStorage
 function saveFilters() {
@@ -1386,9 +1267,6 @@ document.getElementById('clearFiltersBtn').onclick = () => {
 };
 
 
-// Load all projects from backend
-// Load projects for a selected client
-// Load Clients → Projects → then other dropdowns dynamically
 async function loadClients() {
   try {
     const res = await fetch("/get_clients");
@@ -1410,26 +1288,6 @@ document.getElementById("selectClientDropdown").addEventListener("change", funct
   const clientId = this.value;
   loadProjectsDropdown(clientId); // ✅ correct call
 });
-
-
-// // When client changes → load its projects
-// document.getElementById("selectClientDropdown").addEventListener("change", async function() {
-//   const clientId = this.value;
-//   if (!clientId) return;
-//   try {
-//     const res = await fetch(`/get_projects_by_client/${clientId}`);
-//     const projects = await res.json();
-//     modalProject.innerHTML = '<option value="">Select Project</option>';
-//     projects.forEach(p => {
-//       const opt = document.createElement("option");
-//       opt.value = p.id;
-//   opt.textContent = p.name;
-//       modalProject.appendChild(opt);
-//     });
-//   } catch (err) {
-//     console.error("❌ Failed to load projects:", err);
-//   }
-// });
 
 
 async function loadProjectsDropdown(clientId) {
@@ -1460,20 +1318,11 @@ async function loadProjectsDropdown(clientId) {
   }
 }
 
-
-
-// document.addEventListener("DOMContentLoaded", () => {
-//   const role = sessionStorage.getItem("role");
-//   console.log("Current role:", role);
-
-
-// if (role === "SAAIT") {
-  // 🟢 ADMIN LOGIC: Project-based dropdowns
   modalProject.addEventListener("change", async function () {
   const projectId = this.value;
   if (!projectId) return;
 
-  // Cache DOM elements
+  
   const modalStream = document.getElementById("modalStream");
   const modalDashboard = document.getElementById("modalDashboard");
   const modalSubject = document.getElementById("modalSubject");
@@ -1694,33 +1543,6 @@ document.getElementById("exportBtn")?.addEventListener("click", () => {
 
  
 
-// } else {
-//   // 🟡 NON-ADMIN LOGIC: keep your existing dropdown setup
-//   // Use your current global dropdown functions
-//   console.log("Non-admin role detected — loading default dropdowns");
-
-//   // Call your existing global dropdown loading functions
-//   loadUserDropdownsDetails();  // loads users
-//   loadStreamsDropdown();       // loads all streams (non-project)
-//   loadSubjectsDropdown();      // loads all subjects (if exists)
-//   loadPrioritiesDropdown();    // loads all priorities
-//   loadStatusesDropdown();      // loads all statuses
-// }
-
-// });
-
-
-
-
-
-
-// addTicketButton.onclick = () => {
-//   editingIndex = -1;
-//   ticketForm.reset();
-//   document.getElementById("deleteTicketButton").style.display = "none";
-//   customSubject.style.display = 'none';
-// === Open Client Modal on Add Ticket ===
-
 addTicketButton.onclick = async () => {
   const role = sessionStorage.getItem("role")?.toUpperCase();
 
@@ -1821,12 +1643,6 @@ addTicketButton.onclick = async () => {
 };
 
 
- 
- 
- 
-  
-
-
 
     modalAssignedTo.value = '';
   modalClosedDate.value = '';
@@ -1870,10 +1686,6 @@ fetch('/get_projects')
       '<option value="">Failed to load projects</option>';
   });
 
-// On project change, populate users
-// Saait.html — inside the SAH project change listener
-// Saait.html — project -> users (no "Other")
-// --- ✅ FIXED: Prevent duplicate user list issue ---
 const projectDropdown = document.getElementById('modalStream');
 projectDropdown.onchange = async function () {
   const projectId = this.value;
@@ -1954,8 +1766,6 @@ projectDropdown.onchange = async function () {
 
 
 
-
-
 // Hide Stream 2 fields for SAH
 document.getElementById('modalDashboardLabel').style.display = 'none';
 document.getElementById('modalDashboard').style.display = 'none';
@@ -1979,7 +1789,6 @@ document.getElementById('customDashboard').style.display = 'none';
   customDashboard.style.display = '';
   customDashboard.setAttribute('name', 'dashboard');  // ✅ only one active field
 
-  
 
   // Load main Stream list
   populateStreams();
@@ -1997,62 +1806,7 @@ document.getElementById('customDashboard').style.display = 'none';
 }
 
 ticketModal.style.display = "flex";
-// };
 
-// function populateStatusFilter() {
-//   const statusFilter = document.getElementById('statusFilter');
-//   if (!statusFilter) return;
-
-//   // Save current value to preserve selection after reload
-//   const currentValue = statusFilter.value || "";
-
-//   // Remove all options except "All"
-//   while (statusFilter.options.length > 1) {
-//     statusFilter.remove(1);
-//   }
-
-//   const role = (sessionStorage.getItem("role") || "").toUpperCase();
-
-//   let statuses = [];
-//   if (role === "TLC") {
-//     statuses = [
-//       "Open",
-//       "In Progress",
-//       "On Hold",
-//       "Closed"
-//     ];
-//   } else if (role === "SAH") {
-//     statuses = [
-//       "On Hold",
-//       "In Progress",
-//       "Closed"
-//     ];
-//   } else {
-//     // ARM, SAAIT and others get all statuses
-//     statuses = [
-//       "Open",
-//       "In Progress",
-//       "On Hold (ARM Team)",
-//       "On Hold (SAAIT TEAM)",
-//       "Closed",
-//       "On Demand(ARM Team)",
-//       "On Demand (SAAIT TEAM)"
-//     ];
-//   }
-
-//   statuses.forEach(text => {
-//     const opt = document.createElement("option");
-//     opt.value = text;
-//     opt.textContent = text;
-//     statusFilter.appendChild(opt);
-//   });
-
-//   // Restore selection if needed
-//   statusFilter.value = currentValue;
-// }
-
-// // Run this after your page and sessionStorage role setup is done
-// populateStatusFilter();
 
 
 async function populateStreams() {
@@ -2208,16 +1962,6 @@ modalAssignedTo.onchange = () => {
   }
 };
 
-// modalSubject.onchange = () => {
-//   if (modalSubject.value === 'Other') {
-//     customSubject.style.display = 'block';
-//     customSubject.required = true;
-//   } else {
-//     customSubject.style.display = 'none';
-//     customSubject.required = false;
-//     customSubject.value = '';
-//   }
-// };
 
 modalStream.onchange = () => {
   const selectedStream = modalStream.value;
@@ -2275,50 +2019,6 @@ modalDashboard.onchange = () => {
   }
 };
 
-// async function populateStreamFilter() {
-//   try {
-//     const res = await fetch("/get_dropdown_data");
-//     const data = await res.json();
-
-//     const streamFilter = document.getElementById("streamFilter");
-//     if (!streamFilter) return;
-
-//     // ✅ Empty-string option = show everything
-//     streamFilter.innerHTML = '<option value="">All</option>';
-
-//     // ✅ Read role from session
-//     const role = (sessionStorage.getItem("role") || "").toUpperCase();
-
-//     // Filter streams based on role
-//     let allowedStreams = data.streams;
-
-//     if (role === "TLC") {
-//       // TLC only sees HCM, SCM, Finance
-//       allowedStreams = data.streams.filter(s =>
-//         ["HCM", "SCM", "FINANCE"].includes(s.name.toUpperCase())
-//       );
-//     }
-
-//     // ✅ Add filtered streams
-//     allowedStreams.forEach(s => {
-//       const opt = document.createElement("option");
-//       opt.value = s.name;
-
-//       // 👇 rename only the "All" stream for frontend display
-//       if (s.name.toUpperCase() === "ALL") {
-//         opt.textContent = "For All";   // label change only
-//       } else {
-//         opt.textContent = s.name;
-//       }
-
-//       streamFilter.appendChild(opt);
-//     });
-
-//     console.log("✅ Stream filter populated for role:", role, allowedStreams);
-//   } catch (err) {
-//     console.error("❌ Failed to load stream filter:", err);
-//   }
-// }
 
  
 window.addEventListener("load", () => {
@@ -2527,9 +2227,6 @@ function populateStreams(selectedStream = '', selectedDashboard = '', selectedSu
   modalDashboard.required = false;
   modalDashboard.removeAttribute("name"); // ✅ ensure dropdown not submitted
 
-
-    // Create or reuse a text input for Reports Name
-   // Reuse the existing input instead of creating a new one
   const customDashboard = document.getElementById("customDashboard");
   if (customDashboard) {
     customDashboard.style.display = "block";
@@ -2860,8 +2557,7 @@ function openAddModal() {
     raisedBySelect.innerHTML = '<option value="">Select User</option>';
     assignedToSelect.innerHTML = '<option value="">Select Assignee</option>';
 
-    // Reset subject dropdown
-    // modalSubject.innerHTML = '<option value="">Select Subject</option>';
+    
 
     if (!selectedProject) return; // Exit if no project selected
 
@@ -2901,9 +2597,6 @@ function openAddModal() {
         console.error('Error loading users or subjects for the selected project:', err);
     }
 });
-
-
-
 
 
 
@@ -3205,8 +2898,6 @@ function renderTickets() {
 
   console.log("✅ Tickets rendered successfully:", uniqueTickets.length);
 }
-
-
 
 
 
@@ -3555,10 +3246,6 @@ if (editBtn) {
 
 
 
-
-// document.getElementById("userBtn").onclick = () => {
-//   window.location.href = "/users.html";
-// };
 function loadUsers() {
   fetch("/saait_users")
     .then(res => res.json())
@@ -3577,9 +3264,6 @@ function loadUsers() {
     });
 }
 
-// document.getElementById("openAddUser").onclick = () => {
-//   document.getElementById("addUserModal").style.display = "flex";
-// };
 
 function addUser() {
   const name = document.getElementById("newUserName").value;
@@ -3611,78 +3295,6 @@ function deleteUser(id) {
     });
 }
 
-// async function populatePriorityDropdown() {
-//     try {
-//         const res = await fetch('/get_priority');
-//         if (!res.ok) throw new Error('Network error');
-//         const priorities = await res.json();
-//         const modalPriority = document.getElementById('modalPriority');
-//         modalPriority.innerHTML = '<option value="">Select Priority</option>';
-//         if (Array.isArray(priorities)) {
-//             priorities.forEach(p => {
-//                 const option = document.createElement('option');
-//                 option.value = p.name;
-//                 option.textContent = p.name;
-//                 modalPriority.appendChild(option);
-//             });
-//         }
-//     } catch (err) {
-//         console.error('Failed to load priorities:', err);
-//     }
-// }
-
-// document.addEventListener('DOMContentLoaded', populatePriorityDropdown);
-
-// async function populateSubjectDropdown() {
-//     try {
-//         const res = await fetch('/get_subject');
-//         if (!res.ok) throw new Error('Network error');
-//         const subjects = await res.json();
-//         const modalSubject = document.getElementById('modalSubject');
-//         modalSubject.innerHTML = '<option value="">Select Subject</option>';
-//         if (Array.isArray(subjects)) {
-//             subjects.forEach(s => {
-//                 const option = document.createElement('option');
-//                 option.value = s.name;
-//                 option.textContent = s.name;
-//                 modalSubject.appendChild(option);
-//             });
-//         }
-//     } catch (err) {
-//         console.error('Failed to load subjects:', err);
-//     }
-// }
-
-// // Call this on document ready or modal open
-// document.addEventListener('DOMContentLoaded', populateSubjectDropdown);
-
-// async function populateStatusDropdown() {
-//     try {
-//         const res = await fetch('/get_status');
-//         if (!res.ok) throw new Error('Network error');
-//         const statuses = await res.json();
-//         const modalStatus = document.getElementById('modalStatus');
-//         modalStatus.innerHTML = '<option value="">Select Status</option>';
-//         if (Array.isArray(statuses)) {
-//             statuses.forEach(s => {
-//                 const option = document.createElement('option');
-//                 option.value = s.name;
-//                 option.textContent = s.name;
-//                 modalStatus.appendChild(option);
-//             });
-//         }
-//     } catch (err) {
-//         console.error('Failed to load statuses:', err);
-//     }
-// }
-
-// document.addEventListener('DOMContentLoaded', populateStatusDropdown);
-
-
-
-
-
-
 
  
 document.addEventListener("DOMContentLoaded", () => { 
@@ -3698,67 +3310,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-//   // 🔹 New Stream + Stream2 logic
-//   const streamDropdown = document.getElementById("modalStream");
-//   const stream2Dropdown = document.getElementById("modalDashboard");
-//   const customStream = document.getElementById("customStream");
-//   const customStream2 = document.getElementById("customDashboard");
-
-//   // ✅ Load streams dynamically
-//   fetch("/get_stream1")
-//     .then(res => res.json())
-//     .then(streams => {
-//       streams.forEach(s => {
-//         let opt = document.createElement("option");
-//         opt.value = s;
-//         opt.textContent = s;
-//         streamDropdown.insertBefore(opt, streamDropdown.querySelector("option[value='Other']"));
-//       });
-//     });
-
-//   // ✅ When stream changes → load stream2
-//   streamDropdown.addEventListener("change", () => {
-//     if (streamDropdown.value === "Other") {
-//       customStream.style.display = "block";
-//       stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
-//     } else {
-//       customStream.style.display = "none";
-//       stream2Dropdown.innerHTML = '<option value="">Select Stream 2</option>';
-
-//       fetch(`/get_stream2/${encodeURIComponent(streamDropdown.value)}`)
-//         .then(res => res.json())
-//         .then(stream2s => {
-//           stream2s.forEach(s2 => {
-//             let opt = document.createElement("option");
-//             opt.value = s2;
-//             opt.textContent = s2;
-//             stream2Dropdown.appendChild(opt);
-//           });
-//         });
-//     }
-//   });
-
-//   // ✅ Show input when Stream2 = Other
-//   // No "Other" option for Stream2 → always hide customStream2
-// stream2Dropdown.addEventListener("change", () => {
-//   customStream2.style.display = "none";
-// });
-
-
-  // // ✅ On ticket form submit → save new stream/stream2 if "Other"
-  // document.getElementById("ticketForm").addEventListener("submit", async () => {
-  //   const streamVal = streamDropdown.value === "Other" ? customStream.value : streamDropdown.value;
-  //   const stream2Val = stream2Dropdown.value === "Other" ? customStream2.value : stream2Dropdown.value;
-  //   const ticketNoInput = document.getElementById("modalTicketNo");
-
-  //   if (streamDropdown.value === "Other" || stream2Dropdown.value === "Other") {
-  //     await fetch("/add_stream", {
-  //       method: "POST",
-  //       headers: {"Content-Type": "application/json"},
-  //       body: JSON.stringify({stream: streamVal, stream2: stream2Val})
-  //     });
-  //   }
-  // });
 });
 
  
